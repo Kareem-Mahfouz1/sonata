@@ -30,6 +30,7 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from download_limit import request_slot  # noqa: E402
 from colorbar import Inverter, load_bar, luminance_profile, positions_to_values  # noqa: E402
 from invert import (FLAG_LEGEND, OK, block_median, dequantise, estimate_base,  # noqa: E402
                     invert_frame, invert_point, quantise)
@@ -59,7 +60,7 @@ def fetch(url: str, dest: Path, retries: int = 5) -> Path:
     delay = 2.0
     for attempt in range(retries):
         try:
-            with urllib.request.urlopen(url, timeout=60) as response, open(tmp, "wb") as fh:
+            with request_slot(), urllib.request.urlopen(url, timeout=60) as response, open(tmp, "wb") as fh:
                 shutil.copyfileobj(response, fh)
             tmp.replace(dest)
             return dest
