@@ -1687,3 +1687,121 @@
     height: 72%;
   }
 }
+
+/* ---------- Cairo air-quality sonification ---------- */
+.workspace:has(.cairo-audio) {
+  grid-template-rows: minmax(0, 1fr) 226px;
+}
+.cairo-audio .lbl {
+  font-size: 9px;
+  white-space: nowrap;
+}
+.cairo-audio .lbl span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cairo-audio {
+  gap: 1px;
+  padding: 8px 14px;
+  overflow: hidden;
+}
+.cairo-voices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+.cairo-voice {
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--bd);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--mut);
+  text-align: left;
+  transition: border-color 200ms, color 200ms;
+}
+.cairo-voice b {
+  display: inline;
+  color: var(--tx2);
+  font-size: 11px;
+  font-weight: 500;
+}
+.cairo-voice span {
+  display: inline;
+  margin-left: 4px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.cairo-voice.is-on {
+  border-color: #3b5a85;
+  color: var(--tx2);
+}
+.cairo-voice.is-on b {
+  color: var(--blue);
+}
+.cairo-voice.is-null span {
+  color: var(--red);
+}
+.cairo-scrub {
+  display: block;
+  margin-top: 0;
+  color: var(--mut);
+  font-size: 10px;
+}
+.cairo-speed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 96px;
+  color: var(--mut);
+  font-size: 10px;
+}
+.cairo-speed .slider {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+}
+.cairo-audio .ctl { gap: 6px; }
+.cairo-audio .slider { height: 14px; }
+.cairo-audio .cairo-scrub .slider { margin-top: 0; }
+.cairo-audio .ico { width: 30px; height: 30px; }
+.cairo-audio .play { width: 34px; height: 34px; }
+.cairo-timing {
+  margin-top: 0;
+  font-size: 8px;
+  line-height: 1.4;
+  color: var(--mut);
+}
+.cairo-live {
+  margin-top: 2px;
+  color: var(--tx2);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+/* ---------- equirectangular map workspace ---------- */
+.map-screen { display: block; }
+.map-workspace { display: grid; grid-template-rows: minmax(0, 1fr) 300px; height: 100%; min-height: 0; }
+.map-view { position: relative; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 16px 32px 6px; }
+.map-tools { position: relative; z-index: 4; display: flex; align-items: center; gap: 12px; min-height: 34px; }
+.map-search input { width: 220px; padding: 7px 10px; border: 1px solid var(--bd); border-radius: 7px; background: var(--bg); color: var(--tx); font-size: 12px; }
+.map-results { position: absolute; top: 38px; left: 0; width: 260px; margin: 0; padding: 4px; list-style: none; border: 1px solid var(--bd); border-radius: 8px; background: var(--deep); box-shadow: 0 12px 30px #0008; }
+.map-results button { width: 100%; display: flex; justify-content: space-between; padding: 7px 8px; border-radius: 5px; color: var(--tx2); font-size: 12px; text-align: left; }
+.map-results button:hover, .map-results button:focus-visible { background: var(--slate); color: var(--tx); }
+.map-results small { color: var(--mut); }
+.map-source { margin-left: auto; color: var(--mut); font-size: 10px; white-space: nowrap; }
+.map-canvas { width: 100%; min-height: 0; flex: 1; aspect-ratio: 2 / 1; max-height: calc(100% - 48px); border: 1px solid var(--bd); border-radius: 8px; background: #0b1220; image-rendering: pixelated; cursor: crosshair; outline-offset: 3px; }
+.map-canvas:focus-visible { outline: 2px solid var(--blue); }
+.map-foot { display: flex; gap: 16px; justify-content: space-between; align-items: center; color: var(--mut); font-size: 10px; }
+.map-legend { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.map-swatch { display: inline-block; width: 12px; height: 12px; border: 1px solid #7f8b9b; background: repeating-linear-gradient(45deg, #3a424e 0 3px, #aab6c7 3px 4px); }
+.preset-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.preset-btn { padding: 4px 8px; border: 1px solid var(--bd); border-radius: 5px; background: var(--bg); color: var(--tx2); font-size: 10px; white-space: nowrap; }
+.preset-btn.is-active { border-color: var(--blue); color: var(--blue); }
+.story-btn { margin-left: auto; border-color: #3b5a85; }
+@media (max-width: 900px) {
+  .map-workspace { grid-template-rows: minmax(0, 1fr) 340px; }
+  .map-view { padding: 10px 12px 4px; }
+  .map-foot { flex-wrap: wrap; }
+}

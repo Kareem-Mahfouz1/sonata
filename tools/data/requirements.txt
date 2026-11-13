@@ -1,0 +1,7 @@
+# Preprocessing pipeline for NASA SVS 5518 air-quality frames.
+numpy>=1.26
+Pillow>=10.0
+# Validation plots only:
+matplotlib>=3.8
+# Optional: land/ocean breakdown in validate.py (skipped when absent)
+global-land-mask>=1.0

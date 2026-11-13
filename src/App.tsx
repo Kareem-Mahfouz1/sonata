@@ -5,8 +5,6 @@ import { AppIntro } from './components/AppIntro'
 import { AmbientField } from './components/fx/AmbientField'
 import { NavRail } from './components/NavRail'
 import { elements } from './data/elements'
-import { findObservation, observations } from './data/observations'
-import type { ExplorationMode } from './data/observations'
 import { useTransport } from './hooks/useTransport'
 import { flash, ripple } from './lib/fx'
 import { prefersReducedMotion } from './lib/motion'
@@ -24,30 +22,30 @@ function App() {
     screenFromLocation(window.location.hash, window.location.search),
   )
   const [intro, setIntro] = useState(() => !prefersReducedMotion())
-  const [datasetId, setDatasetId] = useState(observations[0].id)
-  const [mode, setMode] = useState<ExplorationMode>('scan')
-  const [velocity, setVelocity] = useState(1.2)
   const [volume, setVolume] = useState(0.6)
   const [selectedIds, setSelectedIds] = useState<string[]>(['chlorophyll', 'aerosols', 'sst'])
   const [shake, setShake] = useState(0)
   const [announcement, setAnnouncement] = useState('')
+  const [cairoPlaying, setCairoPlaying] = useState(false)
 
-  const dataset = findObservation(datasetId)
-  const observation = useTransport(dataset.duration, 84, velocity)
   const fun = useTransport(FUN_DURATION)
   const audio = getSonification()
   const selected = elements.filter((element) => selectedIds.includes(element.id))
-  const activePlaying = screen === 'fun' ? fun.playing : observation.playing
+  const activePlaying = screen === 'fun' ? fun.playing : cairoPlaying
 
-  const pauseObservation = observation.pause
   const pauseFun = fun.pause
 
   useEffect(() => {
     document.title = 'Earth Jukebox — Hear the planet differently'
     const onAnnounce = (event: Event) =>
       setAnnouncement((event as CustomEvent<string>).detail)
+    const onPlaying = (event: Event) => setCairoPlaying(Boolean((event as CustomEvent<boolean>).detail))
     window.addEventListener('earth-jukebox:announce', onAnnounce)
-    return () => window.removeEventListener('earth-jukebox:announce', onAnnounce)
+    window.addEventListener('earth-jukebox:cairo-playing', onPlaying)
+    return () => {
+      window.removeEventListener('earth-jukebox:announce', onAnnounce)
+      window.removeEventListener('earth-jukebox:cairo-playing', onPlaying)
+    }
   }, [])
 
   useEffect(() => {
@@ -58,10 +56,10 @@ function App() {
 
   // Leaving a screen always silences playback so audio never follows the user.
   useEffect(() => {
-    pauseObservation()
     pauseFun()
     audio.stop()
-  }, [screen, pauseObservation, pauseFun, audio])
+    if (screen !== 'observatory') window.dispatchEvent(new Event('earth-jukebox:cairo-stop'))
+  }, [screen, pauseFun, audio])
 
   useEffect(() => {
     audio.setVolume(volume)
@@ -70,9 +68,9 @@ function App() {
   function navigate(next: Screen) {
     if (next === screen) return
     const hash = hashForScreen(next)
-    pauseObservation()
     pauseFun()
     audio.stop()
+    window.dispatchEvent(new Event('earth-jukebox:cairo-stop'))
     setScreen(next)
     if (window.location.hash !== hash) window.location.hash = hash
     flash()
@@ -85,21 +83,11 @@ function App() {
   }
 
   function playObservation() {
-    if (observation.playing) {
-      observation.pause()
-      audio.stop()
-      announce('Playback paused.')
-      return
-    }
-    audio.start(dataset.voices)
-    observation.toggle()
-    announce('Playback started. Prototype audio, not data sonification.')
+    window.dispatchEvent(new Event('earth-jukebox:cairo-toggle'))
   }
 
   function restartObservation() {
-    audio.start(dataset.voices)
-    observation.restart()
-    announce('Playback restarted. Prototype audio.')
+    window.dispatchEvent(new Event('earth-jukebox:cairo-restart'))
   }
 
   function playFun() {
@@ -120,15 +108,6 @@ function App() {
         selected.length === 1 ? '' : 's'
       }. Prototype generated tone.`,
     )
-  }
-
-  function changeDataset(id: string) {
-    const next = findObservation(id)
-    const wasPlaying = observation.playing
-    setDatasetId(id)
-    observation.seek(0)
-    if (wasPlaying) audio.start(next.voices)
-    announce(`${next.name} loaded. Placeholder observation for the design prototype.`)
   }
 
   function toggleElement(id: string) {
@@ -213,22 +192,10 @@ function App() {
         <main className="app-main">
           {screen === 'observatory' ? (
             <ObservatoryScreen
-              datasets={observations}
-              dataset={dataset}
-              mode={mode}
-              velocity={velocity}
-              transport={observation}
               volume={volume}
-              onDataset={changeDataset}
-              onMode={(next) => {
-                setMode(next)
-                announce(`${next} mode selected.`)
-              }}
-              onVelocity={setVelocity}
               onVolume={changeVolume}
-              onPlayToggle={playObservation}
-              onRestart={restartObservation}
               onProbe={announce}
+              onRestart={restartObservation}
             />
           ) : (
             <FunModeScreen
