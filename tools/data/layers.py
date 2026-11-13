@@ -25,6 +25,8 @@ LAYERS = {
         "interp": "linear",
         "anchors": [(0.00, 40.0), (0.31, 100.0), (0.54, 130.0), (0.77, 200.0), (1.00, 500.0)],
         "anchors_source": "measured ticks; fits neither linear nor log (unverified)",
+        "axis_verified": False,
+        "axis_note": "tick positions fit neither linear nor log; piecewise between measured ticks",
     },
     "nox": {
         "name": "Nitrogen Oxides",
@@ -35,6 +37,8 @@ LAYERS = {
         "interp": "log10",
         "anchors": [(0.0, 1e-3), (0.25, 1e-2), (0.5, 1e-1), (0.75, 1.0), (1.0, 10.0)],
         "anchors_source": "decade labels; measured positions within 0.02-0.06 of ideal log",
+        "axis_verified": True,
+        "axis_note": "decade labels are unambiguous; measured tick offsets attributed to label centring",
     },
     "o3": {
         "name": "Ozone",
@@ -45,6 +49,8 @@ LAYERS = {
         "interp": "linear",
         "anchors": [(0.0, 5.0), (1.0, 60.0)],
         "anchors_source": "measured ticks 0.268/0.628 vs linear 0.273/0.636 (verified linear)",
+        "axis_verified": True,
+        "axis_note": "ticks match a linear scale to within 0.01 of the bar",
     },
     "pm25": {
         "name": "Particulate Matter (PM2.5)",
@@ -55,6 +61,8 @@ LAYERS = {
         "interp": "log10",
         "anchors": [(0.0, 0.4), (0.2, 1.6), (0.4, 6.4), (0.6, 25.6), (0.8, 102.4), (1.0, 409.6)],
         "anchors_source": "measured 0.20/0.40/0.60/0.81 vs ideal 0.2/0.4/0.6/0.8 (verified log)",
+        "axis_verified": True,
+        "axis_note": "x4 log ticks match measured positions within 0.01",
     },
 }
 
@@ -76,6 +84,8 @@ DEFAULTS = {
 
 # Fixed sample locations.  Cairo is the only one named so far; the brief says
 # two more will follow, so the list is data, not code.
+# `patch_px` is the full-resolution window used for the fine extraction:
+# 5 px at 2048x1024 = 0.88 deg lon x 0.88 deg lat.
 PRESETS = [
-    {"id": "cairo", "name": "Cairo", "lat": 30.04, "lon": 31.24},
+    {"id": "cairo", "name": "Cairo", "lat": 30.04, "lon": 31.24, "patch_px": 5},
 ]

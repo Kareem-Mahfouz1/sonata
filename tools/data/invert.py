@@ -97,6 +97,30 @@ def invert_frame(inv: Inverter, block: np.ndarray, cov: np.ndarray, cfg: dict,
     }
 
 
+def invert_point(inv: Inverter, color: np.ndarray, base: float | None, cfg: dict) -> tuple:
+    """Invert a single colour (a full-resolution preset patch median)."""
+    p = np.asarray(color, dtype=np.float32).reshape(1, 3)
+    work = p if base is None else np.clip(p / max(base, 1e-3), 0, 255)
+    idx, chroma_dist = inv.match_chroma(work)
+    if base is not None:
+        total = np.maximum(work.sum(axis=1, keepdims=True), 1e-6)
+        chroma_all = np.sqrt(((work / total)[:, None, :] - inv.chroma[None, :, :]) ** 2).sum(axis=2)
+        lum_dist = np.abs(luminance(work)[:, None] / 255.0 - inv.lum[None, :])
+        idx = (chroma_all + 0.35 * lum_dist).argmin(axis=1)
+        chroma_dist = chroma_all[np.arange(1), idx]
+    b, spread = inv.implied_base(p, idx)
+    flag = OK
+    if p.max() < cfg["brightness_min"]:
+        flag = DARK
+    elif chroma_dist[0] > cfg["chroma_tol"]:
+        flag = NO_MATCH
+    elif spread[0] > cfg["base_spread_max"]:
+        flag = BASE_INCONSISTENT
+    elif saturation(work)[0] < cfg["sat_min"]:
+        flag = LOW_SAT
+    return float(inv.values[idx[0]]), int(flag), float(chroma_dist[0])
+
+
 def estimate_base(frames: list[dict], blocks: list[np.ndarray], cfg: dict) -> dict:
     """Estimate the static greyscale shading and test whether it is static.
 

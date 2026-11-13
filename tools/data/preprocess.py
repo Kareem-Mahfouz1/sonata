@@ -32,7 +32,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from colorbar import Inverter, load_bar, luminance_profile, positions_to_values  # noqa: E402
 from invert import (FLAG_LEGEND, OK, block_median, dequantise, estimate_base,  # noqa: E402
-                    invert_frame, quantise)
+                    invert_frame, invert_point, quantise)
 from layers import (DEFAULTS, FRAME_COUNT, FRAMES_URL, LAYERS, PRESETS,  # noqa: E402
                     START_DATE, TIME_STEP_HOURS, TIME_STEP_VERIFIED)
 
@@ -80,10 +80,25 @@ def local_or_fetch(layer_key: str, layer: dict, index: int, stream: bool) -> Pat
     return fetch(frame_url(layer, index), path)
 
 
+def preset_pixel(img: np.ndarray, lat: float, lon: float, patch_px: int) -> np.ndarray:
+    """Median of a small full-resolution patch centred on the point.
+
+    5 px at 2048x1024 is 0.88 deg lon x 0.88 deg lat - a fine window,
+    independent of the 180x90 grid cell it falls in.
+    """
+    h, w = img.shape[:2]
+    x = int((lon + 180.0) / 360.0 * w)
+    y = int((90.0 - lat) / 180.0 * h)
+    half = patch_px // 2
+    patch = img[max(0, y - half):y + half + 1, max(0, x - half):x + half + 1]
+    return np.median(patch.reshape(-1, 3), axis=0).astype(np.float32)
+
+
 def process_frame(path: Path, inv: Inverter, nx: int, ny: int) -> dict:
     img = np.asarray(Image.open(path).convert("RGB")).astype(np.float32)
     block, cov = block_median(img, nx, ny)
-    return {"block": block, "cov": cov}
+    patches = {p["id"]: preset_pixel(img, p["lat"], p["lon"], p.get("patch_px", 5)) for p in PRESETS}
+    return {"block": block, "cov": cov, "patches": patches}
 
 
 def main() -> None:
@@ -135,17 +150,19 @@ def main() -> None:
                     raise FileNotFoundError(f"frame {i} missing and --stream not set")
                 data = process_frame(path, inv, nx, ny)
                 np.savez_compressed(cache / "blocks" / f"{i:04d}.npz",
-                                    block=data["block"], cov=data["cov"])
+                                    block=data["block"], cov=data["cov"],
+                                    **{f"patch_{k}": v for k, v in data["patches"].items()})
                 if args.stream:
                     path.unlink(missing_ok=True)
 
             with ThreadPoolExecutor(max_workers=args.workers) as pool:
                 list(pool.map(job, todo))
 
-        blocks = {}
+        blocks, patches = {}, {}
         for i in indices:
             with np.load(cache / "blocks" / f"{i:04d}.npz") as npz:
                 blocks[i] = (npz["block"].astype(np.float32), npz["cov"].astype(np.float32))
+                patches[i] = {p["id"]: npz[f"patch_{p['id']}"].astype(np.float32) for p in PRESETS}
 
         # --- stage 2: pass 1 (chromaticity only) -> base map ----------------
         pass1 = [invert_frame(inv, *blocks[i], cfg) for i in indices]
@@ -181,8 +198,11 @@ def main() -> None:
             "units": layer["units"],
             "units_status": "colourbar label, not independently calibrated",
             "colorbar": {
-                "min": lo, "max": hi, "interp": layer["interp"],
+                "min": lo, "max": hi, "units": layer["units"],
+                "interp": layer["interp"],
                 "anchors": layer["anchors"], "anchors_source": layer["anchors_source"],
+                "axis_verified": layer["axis_verified"],
+                "axis_note": layer["axis_note"],
                 "luminance": prof,
             },
             "grid": {"width": nx, "height": ny, "bbox": [-180, -90, 180, 90]},
@@ -216,19 +236,38 @@ def main() -> None:
             row = int(np.floor((90 - preset["lat"]) / 180 * ny))
             points = []
             for i, res in zip(indices, results):
+                # grid method: 3x3 cells around the point (~2 deg)
                 window = np.s_[max(0, row - 1):row + 2, max(0, col - 1):col + 2]
                 vals = res["value"][window]
                 fl = res["flags"][window]
                 ok = fl == OK
+                grid_value = float(vals[ok].mean()) if ok.any() else None
+                grid_flag = int(np.bincount(fl.ravel()).argmax())
+                # fine method: median of the full-resolution patch at the point
+                base_point = base[row, col] if base is not None else None
+                fine_value, fine_flag, fine_chroma = invert_point(
+                    inv, patches[i][preset["id"]], base_point, cfg)
+                if fine_flag != OK:
+                    fine_value = None
+                diff = (None if (fine_value is None or grid_value in (None, 0))
+                        else (fine_value - grid_value) / grid_value * 100.0)
                 points.append({
                     "frame": i,
                     "hour_index": i,
-                    "value": float(vals[ok].mean()) if ok.any() else None,
+                    "hour_of_day": (i * TIME_STEP_HOURS) % 24,
+                    "value": fine_value,
+                    "flag": fine_flag,
+                    "chroma_dist": fine_chroma,
+                    "grid_value": grid_value,
+                    "grid_flag": grid_flag,
                     "cells_ok": int(ok.sum()),
-                    "flag": int(np.bincount(fl.ravel()).argmax()),
+                    "fine_minus_grid_pct": diff,
                 })
             series.append({"preset": preset["id"], "name": preset["name"],
-                           "lat": preset["lat"], "lon": preset["lon"], "points": points})
+                           "lat": preset["lat"], "lon": preset["lon"],
+                           "extraction": "value/flag = median of 5x5 full-res pixels (0.88 deg); "
+                                         "grid_value/grid_flag = 3x3 cells of the 180x90 grid",
+                           "units": layer["units"], "points": points})
         (layer_dir / "series.json").write_text(json.dumps(series, indent=2))
 
         size = sum(p.stat().st_size for p in layer_dir.iterdir() if p.is_file())
