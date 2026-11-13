@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Data recon (Step 2) - never commit raw frames or generated outputs
+/data/raw/
+/data/preview/
+/data/processed/
+__pycache__/
+*.pyc
