@@ -1,0 +1,38 @@
+.app-shell { max-width: 1440px; margin-inline: auto; padding: 28px clamp(20px, 5vw, 72px) 56px; overflow: hidden; }
+.topbar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+.brand { color: var(--ink); text-decoration: none; font-weight: 700; letter-spacing: -.03em; display: inline-flex; align-items: center; gap: 10px; }
+.brand-dot, .status-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--orange); }
+.topbar-controls, .language-switch, .hero-actions { display: flex; align-items: center; gap: 12px; }
+.status, .eyebrow, .hero-index, .count { color: var(--muted); font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.status { display: flex; align-items: center; gap: 8px; }
+.language-switch { border: 1px solid var(--line); padding: 3px; gap: 2px; }
+.language-switch button, .segmented-control button { border: 0; background: transparent; color: var(--muted); padding: 7px 10px; font-size: 12px; }
+.language-switch .is-selected, .segmented-control .is-selected { background: var(--ink); color: var(--paper); }
+.hero { position: relative; display: flex; justify-content: space-between; gap: 32px; padding: clamp(68px, 11vw, 150px) 0 74px; }
+.hero-copy { max-width: 690px; }
+.eyebrow { color: var(--teal); margin: 0 0 20px; }
+h1 { max-width: 680px; font-size: clamp(46px, 7vw, 92px); line-height: .96; letter-spacing: -.075em; margin: 0 0 28px; font-weight: 600; }
+.description { color: var(--muted); max-width: 540px; font-size: 18px; }
+.hero-actions { margin-top: 40px; flex-wrap: wrap; }
+.segmented-control { display: flex; border: 1px solid var(--line); padding: 3px; }
+.segmented-control button { min-width: 96px; }
+.play-button { background: var(--lime); border: 1px solid var(--ink); color: var(--ink); padding: 11px 17px; display: inline-flex; gap: 10px; align-items: center; font-weight: 700; }
+.hero-index { display: flex; flex-direction: column; align-items: flex-end; gap: 14px; padding-top: 4px; }
+.index-line { width: 1px; height: 90px; background: var(--orange); }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; border-top: 1px solid var(--line); padding-top: 18px; }
+.map-placeholder { min-height: 470px; background: radial-gradient(circle at 30% 30%, #376c65, #0d3737 62%, #092928); position: relative; display: grid; place-items: center; color: #b6d2b9; overflow: hidden; }
+.map-placeholder::before { content: ''; position: absolute; inset: 12%; border: 1px solid rgba(215,237,104,.45); border-radius: 50%; transform: rotate(-18deg) scaleX(1.7); }
+.map-placeholder::after { content: ''; position: absolute; inset: 0; opacity: .18; background-image: linear-gradient(rgba(215,237,104,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(215,237,104,.4) 1px, transparent 1px); background-size: 44px 44px; }
+.map-placeholder span { z-index: 1; font: 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.sidebar { display: flex; flex-direction: column; gap: 18px; }
+.panel { background: var(--panel); padding: 22px; min-height: 190px; }
+.legend-panel { background: var(--ink); color: var(--paper); min-height: 252px; }
+.panel-heading { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+.legend-panel .panel-heading { border-color: #3a4742; }
+h2 { font-size: 16px; margin: 0; letter-spacing: -.02em; }
+.legend-mark { color: var(--lime); font-size: 24px; font-weight: 300; }
+.empty-state { color: var(--muted); font-size: 14px; margin-top: 28px; max-width: 220px; }
+.legend-panel .empty-state { color: #a7b6ac; }
+.live-region { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@media (max-width: 820px) { .hero { padding-block: 70px 58px; } .hero-index { display: none; } .workspace { grid-template-columns: 1fr; } .map-placeholder { min-height: 330px; } }
+@media (max-width: 560px) { .app-shell { padding-inline: 16px; } .topbar { align-items: flex-start; gap: 16px; } .status { display: none; } h1 { font-size: 52px; } .hero-actions { align-items: stretch; flex-direction: column; } .segmented-control, .play-button { width: 100%; justify-content: center; } }

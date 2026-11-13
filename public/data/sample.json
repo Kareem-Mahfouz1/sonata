@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "id": "sample-layer",
+    "name": "Placeholder layer",
+    "units": "unitless",
+    "kind": "observed",
+    "source": "NASA EIC placeholder",
+    "timeRange": "TODO",
+    "spatialResolution": "TODO",
+    "creditLine": "NASA placeholder"
+  },
+  "grid": { "width": 2, "height": 2, "bbox": [-180, -90, 180, 90] },
+  "frameCount": 2,
+  "values": [[0.1, 0.2], [0.3, 0.4]]
+}

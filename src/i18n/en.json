@@ -1,0 +1,20 @@
+{
+  "appName": "Earth Jukebox",
+  "eyebrow": "NASA Earth Information Center",
+  "title": "Hear the planet change",
+  "description": "A sonification studio for Earth imagery. Choose a mode, then explore how visual layers could become sound.",
+  "scientific": "Scientific",
+  "fun": "Fun",
+  "artisticInterpretation": "artistic interpretation",
+  "english": "English",
+  "arabic": "Arabic",
+  "play": "Play test tone",
+  "pause": "Pause",
+  "voices": "Voices",
+  "legend": "Live legend",
+  "legendEmpty": "Your active voices will appear here.",
+  "voicesEmpty": "No voices registered yet.",
+  "ready": "Ready. Press play to start the audio context.",
+  "playing": "Test tone playing.",
+  "paused": "Paused."
+}
