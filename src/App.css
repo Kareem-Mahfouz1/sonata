@@ -1687,3 +1687,95 @@
     height: 72%;
   }
 }
+
+/* ---------- Cairo air-quality sonification ---------- */
+.workspace:has(.cairo-audio) {
+  grid-template-rows: minmax(0, 1fr) 226px;
+}
+.cairo-audio .lbl {
+  font-size: 9px;
+  white-space: nowrap;
+}
+.cairo-audio .lbl span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cairo-audio {
+  gap: 1px;
+  padding: 8px 14px;
+  overflow: hidden;
+}
+.cairo-voices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+.cairo-voice {
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--bd);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--mut);
+  text-align: left;
+  transition: border-color 200ms, color 200ms;
+}
+.cairo-voice b {
+  display: inline;
+  color: var(--tx2);
+  font-size: 11px;
+  font-weight: 500;
+}
+.cairo-voice span {
+  display: inline;
+  margin-left: 4px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.cairo-voice.is-on {
+  border-color: #3b5a85;
+  color: var(--tx2);
+}
+.cairo-voice.is-on b {
+  color: var(--blue);
+}
+.cairo-voice.is-null span {
+  color: var(--red);
+}
+.cairo-scrub {
+  display: block;
+  margin-top: 0;
+  color: var(--mut);
+  font-size: 10px;
+}
+.cairo-speed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 96px;
+  color: var(--mut);
+  font-size: 10px;
+}
+.cairo-speed .slider {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+}
+.cairo-audio .ctl { gap: 6px; }
+.cairo-audio .slider { height: 14px; }
+.cairo-audio .cairo-scrub .slider { margin-top: 0; }
+.cairo-audio .ico { width: 30px; height: 30px; }
+.cairo-audio .play { width: 34px; height: 34px; }
+.cairo-timing {
+  margin-top: 0;
+  font-size: 8px;
+  line-height: 1.4;
+  color: var(--mut);
+}
+.cairo-live {
+  margin-top: 2px;
+  color: var(--tx2);
+  font-size: 11px;
+  line-height: 1.45;
+}

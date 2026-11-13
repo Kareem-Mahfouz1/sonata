@@ -31,13 +31,14 @@ function App() {
   const [selectedIds, setSelectedIds] = useState<string[]>(['chlorophyll', 'aerosols', 'sst'])
   const [shake, setShake] = useState(0)
   const [announcement, setAnnouncement] = useState('')
+  const [cairoPlaying, setCairoPlaying] = useState(false)
 
   const dataset = findObservation(datasetId)
   const observation = useTransport(dataset.duration, 84, velocity)
   const fun = useTransport(FUN_DURATION)
   const audio = getSonification()
   const selected = elements.filter((element) => selectedIds.includes(element.id))
-  const activePlaying = screen === 'fun' ? fun.playing : observation.playing
+  const activePlaying = screen === 'fun' ? fun.playing : cairoPlaying
 
   const pauseObservation = observation.pause
   const pauseFun = fun.pause
@@ -46,8 +47,13 @@ function App() {
     document.title = 'Earth Jukebox — Hear the planet differently'
     const onAnnounce = (event: Event) =>
       setAnnouncement((event as CustomEvent<string>).detail)
+    const onPlaying = (event: Event) => setCairoPlaying(Boolean((event as CustomEvent<boolean>).detail))
     window.addEventListener('earth-jukebox:announce', onAnnounce)
-    return () => window.removeEventListener('earth-jukebox:announce', onAnnounce)
+    window.addEventListener('earth-jukebox:cairo-playing', onPlaying)
+    return () => {
+      window.removeEventListener('earth-jukebox:announce', onAnnounce)
+      window.removeEventListener('earth-jukebox:cairo-playing', onPlaying)
+    }
   }, [])
 
   useEffect(() => {
@@ -61,6 +67,7 @@ function App() {
     pauseObservation()
     pauseFun()
     audio.stop()
+    if (screen !== 'observatory') window.dispatchEvent(new Event('earth-jukebox:cairo-stop'))
   }, [screen, pauseObservation, pauseFun, audio])
 
   useEffect(() => {
@@ -85,21 +92,11 @@ function App() {
   }
 
   function playObservation() {
-    if (observation.playing) {
-      observation.pause()
-      audio.stop()
-      announce('Playback paused.')
-      return
-    }
-    audio.start(dataset.voices)
-    observation.toggle()
-    announce('Playback started. Prototype audio, not data sonification.')
+    window.dispatchEvent(new Event('earth-jukebox:cairo-toggle'))
   }
 
   function restartObservation() {
-    audio.start(dataset.voices)
-    observation.restart()
-    announce('Playback restarted. Prototype audio.')
+    window.dispatchEvent(new Event('earth-jukebox:cairo-restart'))
   }
 
   function playFun() {
@@ -226,7 +223,6 @@ function App() {
               }}
               onVelocity={setVelocity}
               onVolume={changeVolume}
-              onPlayToggle={playObservation}
               onRestart={restartObservation}
               onProbe={announce}
             />

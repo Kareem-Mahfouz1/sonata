@@ -1,6 +1,6 @@
 import type { ExplorationMode, ObservationDataset } from '../data/observations'
 import type { Transport } from '../hooks/useTransport'
-import { AudioPanel } from '../components/observatory/AudioPanel'
+import { CairoSonification } from '../components/observatory/CairoSonification'
 import { DatasetList } from '../components/observatory/DatasetList'
 import { ExplorationPanel } from '../components/observatory/ExplorationPanel'
 import { MappingPanel } from '../components/observatory/MappingPanel'
@@ -17,7 +17,6 @@ interface ObservatoryScreenProps {
   onMode: (mode: ExplorationMode) => void
   onVelocity: (value: number) => void
   onVolume: (value: number) => void
-  onPlayToggle: () => void
   onRestart: () => void
   onProbe: (message: string) => void
 }
@@ -33,7 +32,6 @@ export function ObservatoryScreen({
   onMode,
   onVelocity,
   onVolume,
-  onPlayToggle,
   onRestart,
   onProbe,
 }: ObservatoryScreenProps) {
@@ -60,15 +58,7 @@ export function ObservatoryScreen({
             onVelocity={onVelocity}
           />
           <MappingPanel mappings={dataset.mappings} playing={transport.playing} />
-          <AudioPanel
-            transport={transport}
-            duration={dataset.duration}
-            seed={dataset.waveSeed}
-            volume={volume}
-            onVolume={onVolume}
-            onToggle={onPlayToggle}
-            onRestart={onRestart}
-          />
+          <CairoSonification onAnnounce={onProbe} volume={volume} onVolume={onVolume} onRestart={onRestart} />
         </div>
       </div>
     </section>
