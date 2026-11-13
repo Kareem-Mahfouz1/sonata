@@ -78,18 +78,18 @@ export function CairoSonification({ point, onPoint, onFrame, playRequest, onAnno
     else pendingPlay.current = true
   }, [playRequest]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function ensureAudio(nextSeries = series): Promise<CairoAudio> {
+  async function ensureAudio(nextSeries = series, enabledState = enabled): Promise<CairoAudio> {
     if (audioRef.current) return audioRef.current
     const { createAudio } = await import('../../audio/earthJukebox/engine')
     const next = await createAudio(nextSeries)
     audioRef.current = next
     next.setVolume(volume)
-    LAYERS.forEach((id) => next.setEnabled(id, enabled[id]))
+    LAYERS.forEach((id) => next.setEnabled(id, enabledState[id]))
     return next
   }
 
-  async function startAt(nextFrame: number, nextSeries = series, at = nextFrame) {
-    const next = await ensureAudio(nextSeries)
+  async function startAt(nextFrame: number, nextSeries = series, at = nextFrame, enabledState = enabled) {
+    const next = await ensureAudio(nextSeries, enabledState)
     clockRef.current = { start: performance.now(), frame: at }
     next.seek(at); setFrame(at); onFrame(at)
     await next.play(); setPlaying(true)
@@ -181,10 +181,19 @@ export function CairoSonification({ point, onPoint, onFrame, playRequest, onAnno
 
   function toggleLayer(id: EarthLayerId) {
     const next = !enabled[id]
-    setEnabled((current) => ({ ...current, [id]: next }))
+    const nextEnabled = { ...enabled, [id]: next }
+    setEnabled(nextEnabled)
     audioRef.current?.setEnabled(id, next)
     const voice = earthJukeboxConfig.voices.find((item) => item.id === id)!
-    onAnnounce(`${voice.label} ${next ? 'on' : 'off'}${id === 'nox' ? ' (experimental)' : ''}.`)
+    const anyOn = LAYERS.some((layer) => nextEnabled[layer])
+    if (!anyOn) {
+      stopStory()
+      onAnnounce('All voices off.')
+      return
+    }
+    if (next && !playing && series.pm25) void startAt(frame, series, frame, nextEnabled)
+    const resting = states[id] === null
+    onAnnounce(`${voice.label} ${next ? (resting ? 'on; no reliable reading at this frame, voice resting' : 'on') : 'off'}${id === 'nox' ? ' (experimental)' : ''}.`)
   }
 
   const currentPreset = presetPoints.find((preset) => Math.abs(preset.lat - point.lat) < 1e-9 && Math.abs(preset.lon - point.lon) < 1e-9)
@@ -211,7 +220,9 @@ export function CairoSonification({ point, onPoint, onFrame, playRequest, onAnno
               aria-pressed={enabled[voice.id]} aria-label={`${voice.label} ${voice.id === 'nox' ? 'experimental ' : ''}voice ${enabled[voice.id] ? 'on' : 'off'}`}
               onClick={() => toggleLayer(voice.id)}>
               <b>{voice.shortLabel}{voice.id === 'nox' ? ' · exp' : ''}</b>
-              <span>{value === null ? 'No reading' : source === 'detailed' ? 'Detailed' : 'Regional'}</span>
+              <span title={!enabled[voice.id] ? `${voice.label} is off` : value === null ? `${voice.label}: no reliable reading at this frame; voice resting` : `${voice.label} on`}>
+                {!enabled[voice.id] ? 'Off' : value === null ? 'On · none' : source === 'detailed' ? 'On · fine' : 'On · 2°'}
+              </span>
             </button>
           )
         })}

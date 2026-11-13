@@ -1740,6 +1740,9 @@
 .cairo-voice.is-on b {
   color: var(--blue);
 }
+.cairo-voice.is-off {
+  opacity: 0.62;
+}
 .cairo-voice.is-null span {
   color: var(--red);
 }
