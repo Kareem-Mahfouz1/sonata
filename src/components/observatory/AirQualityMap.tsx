@@ -67,7 +67,9 @@ export function AirQualityMap({ frame, point, onPoint, onAnnounce }: Props) {
       const nullCell = flag !== 0 || byte === 255
       const color = nullCell ? [58, 66, 78] : palette(byte / 254)
       const offset = cell * 4
-      image.data[offset] = color[0]; image.data[offset + 1] = color[1]; image.data[offset + 2] = color[2]; image.data[offset + 3] = 255
+      image.data[offset] = color[0]; image.data[offset + 1] = color[1]; image.data[offset + 2] = color[2]
+      // Data cells stay legible; the scene stage glows faintly through ocean and null areas.
+      image.data[offset + 3] = nullCell ? 246 : 222
     }
     const off = document.createElement('canvas')
     off.width = W; off.height = H

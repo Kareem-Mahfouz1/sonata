@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CairoAudio } from '../../audio/earthJukebox/engine'
-import { earthJukeboxConfig, type EarthLayerId } from '../../audio/earthJukebox/config'
+import {
+  defaultInstrumentMap,
+  earthJukeboxConfig,
+  instrumentConfig,
+  type EarthLayerId,
+  type InstrumentId,
+  type InstrumentMap,
+} from '../../audio/earthJukebox/config'
 import { describeState, TIMING_LABEL } from '../../audio/earthJukebox/state'
 import type { SeriesResult } from '../../data/airQuality/types.ts'
 import { getSeries } from '../../data/loaders.ts'
 import { presetPoints, type PresetPoint } from '../../data/airQuality/presetList'
+import { sceneForSelection, type LayerSelection } from '../../visuals/scenes'
 import type { MapPoint } from './AirQualityMap'
 import { Icon } from '../ui/Icon'
 import { PlayButton } from '../ui/PlayButton'
@@ -22,26 +30,27 @@ interface Props {
   volume: number
   onVolume: (value: number) => void
   onRestart: () => void
+  selection: LayerSelection
+  onSelection: (selection: LayerSelection) => void
 }
 
-export function CairoSonification({ point, onPoint, onFrame, playRequest, onAnnounce, volume, onVolume, onRestart }: Props) {
+export function CairoSonification({
+  point, onPoint, onFrame, playRequest, onAnnounce, volume, onVolume, onRestart, selection, onSelection,
+}: Props) {
   const [series, setSeries] = useState<Partial<Record<EarthLayerId, SeriesResult>>>({})
   const [playing, setPlaying] = useState(false)
   const [story, setStory] = useState(false)
   const [frame, setFrame] = useState(0)
   const [speed, setSpeed] = useState(earthJukeboxConfig.speed.default)
-  const [enabled, setEnabled] = useState<Record<EarthLayerId, boolean>>(() => Object.fromEntries(
-    earthJukeboxConfig.voices.map((voice) => [voice.id, voice.enabledByDefault]),
-  ) as Record<EarthLayerId, boolean>)
+  const [instruments, setInstruments] = useState<InstrumentMap>(() => defaultInstrumentMap())
   const audioRef = useRef<CairoAudio | null>(null)
   const clockRef = useRef({ start: 0, frame: 0 })
   const storyToken = useRef(0)
   const storyDriven = useRef(false)
   const pendingPlay = useRef(false)
-  const pointRef = useRef(point)
-  pointRef.current = point
   const total = series.pm25?.values.length ?? 301
   const states = Object.fromEntries(LAYERS.map((id) => [id, series[id]?.values[frame] ?? null])) as Record<EarthLayerId, number | null>
+  const scene = sceneForSelection(selection)
 
   async function load(point: MapPoint) {
     const results = await Promise.all(LAYERS.map((id) => getSeries(point.lat, point.lon, id)))
@@ -78,17 +87,18 @@ export function CairoSonification({ point, onPoint, onFrame, playRequest, onAnno
     else pendingPlay.current = true
   }, [playRequest]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function ensureAudio(nextSeries = series, enabledState = enabled): Promise<CairoAudio> {
+  async function ensureAudio(nextSeries = series, enabledState = selection): Promise<CairoAudio> {
     if (audioRef.current) return audioRef.current
     const { createAudio } = await import('../../audio/earthJukebox/engine')
     const next = await createAudio(nextSeries)
     audioRef.current = next
     next.setVolume(volume)
     LAYERS.forEach((id) => next.setEnabled(id, enabledState[id]))
+    LAYERS.forEach((id) => next.setInstrument(id, instruments[id]))
     return next
   }
 
-  async function startAt(nextFrame: number, nextSeries = series, at = nextFrame, enabledState = enabled) {
+  async function startAt(nextFrame: number, nextSeries = series, at = nextFrame, enabledState = selection) {
     const next = await ensureAudio(nextSeries, enabledState)
     clockRef.current = { start: performance.now(), frame: at }
     next.seek(at); setFrame(at); onFrame(at)
@@ -180,20 +190,28 @@ export function CairoSonification({ point, onPoint, onFrame, playRequest, onAnno
   }
 
   function toggleLayer(id: EarthLayerId) {
-    const next = !enabled[id]
-    const nextEnabled = { ...enabled, [id]: next }
-    setEnabled(nextEnabled)
+    const next = !selection[id]
+    const nextSelection = { ...selection, [id]: next }
+    onSelection(nextSelection)
     audioRef.current?.setEnabled(id, next)
     const voice = earthJukeboxConfig.voices.find((item) => item.id === id)!
-    const anyOn = LAYERS.some((layer) => nextEnabled[layer])
+    const anyOn = LAYERS.some((layer) => nextSelection[layer])
     if (!anyOn) {
       stopStory()
       onAnnounce('All voices off.')
       return
     }
-    if (next && !playing && series.pm25) void startAt(frame, series, frame, nextEnabled)
+    if (next && !playing && series.pm25) void startAt(frame, series, frame, nextSelection)
     const resting = states[id] === null
-    onAnnounce(`${voice.label} ${next ? (resting ? 'on; no reliable reading at this frame, voice resting' : 'on') : 'off'}${id === 'nox' ? ' (experimental)' : ''}.`)
+    onAnnounce(`${voice.label} ${next ? (resting ? 'on; no reliable reading at this frame, voice resting' : 'on') : 'off'}${id === 'nox' ? ' (experimental)' : ''}. Scene: ${sceneForSelection(nextSelection).name}.`)
+  }
+
+  function changeInstrument(id: EarthLayerId, next: InstrumentId) {
+    setInstruments((current) => ({ ...current, [id]: next }))
+    audioRef.current?.setInstrument(id, next)
+    const voice = earthJukeboxConfig.voices.find((item) => item.id === id)!
+    const instrument = instrumentConfig(next)
+    onAnnounce(`${voice.label} instrument changed to ${instrument.honestLabel}.`)
   }
 
   const currentPreset = presetPoints.find((preset) => Math.abs(preset.lat - point.lat) < 1e-9 && Math.abs(preset.lon - point.lon) < 1e-9)
@@ -216,14 +234,22 @@ export function CairoSonification({ point, onPoint, onFrame, playRequest, onAnno
           const value = states[voice.id]
           const source = series[voice.id]?.source
           return (
-            <button key={voice.id} type="button" className={`cairo-voice ${enabled[voice.id] ? 'is-on' : ''} ${value === null ? 'is-null' : ''}`}
-              aria-pressed={enabled[voice.id]} aria-label={`${voice.label} ${voice.id === 'nox' ? 'experimental ' : ''}voice ${enabled[voice.id] ? 'on' : 'off'}`}
-              onClick={() => toggleLayer(voice.id)}>
-              <b>{voice.shortLabel}{voice.id === 'nox' ? ' · exp' : ''}</b>
-              <span title={!enabled[voice.id] ? `${voice.label} is off` : value === null ? `${voice.label}: no reliable reading at this frame; voice resting` : `${voice.label} on`}>
-                {!enabled[voice.id] ? 'Off' : value === null ? 'On · none' : source === 'detailed' ? 'On · fine' : 'On · 2°'}
-              </span>
-            </button>
+            <div className="cairo-voice-card" key={voice.id}>
+              <button type="button" className={`cairo-voice ${selection[voice.id] ? 'is-on' : 'is-off'} ${value === null ? 'is-null' : ''}`}
+                aria-pressed={selection[voice.id]} aria-label={`${voice.label} ${voice.id === 'nox' ? 'experimental ' : ''}voice ${selection[voice.id] ? 'on' : 'off'}`}
+                onClick={() => toggleLayer(voice.id)}>
+                <b>{voice.shortLabel}{voice.id === 'nox' ? ' · exp' : ''}</b>
+                <span title={!selection[voice.id] ? `${voice.label} is off` : value === null ? `${voice.label}: no reliable reading at this frame; voice resting` : `${voice.label} on`}>
+                  {!selection[voice.id] ? 'Off' : value === null ? 'On · none' : source === 'detailed' ? 'On · fine' : 'On · 2°'}
+                </span>
+              </button>
+              <select className="cairo-instrument" aria-label={`${voice.label} instrument`} value={instruments[voice.id]}
+                onChange={(event) => changeInstrument(voice.id, event.target.value as InstrumentId)}>
+                {earthJukeboxConfig.instruments.map((instrument) => (
+                  <option key={instrument.id} value={instrument.id}>{instrument.label} — {instrument.honestLabel}</option>
+                ))}
+              </select>
+            </div>
           )
         })}
       </div>
@@ -234,7 +260,7 @@ export function CairoSonification({ point, onPoint, onFrame, playRequest, onAnno
       <div className="ctl mono">
         <button type="button" className="ico" aria-label="Restart playback" onClick={() => { seek(0); onRestart() }}><Icon name="restart" /></button>
         <label className="cairo-speed">Speed
-          <input type="range" className="slider" min={earthJukeboxConfig.speed.min} max={earthJukeboxConfig.speed.max}
+          <input className="slider" type="range" min={earthJukeboxConfig.speed.min} max={earthJukeboxConfig.speed.max}
             step={earthJukeboxConfig.speed.step} value={speed} aria-label="Playback speed"
             onChange={(event) => { const value = Number(event.target.value); setSpeed(value); clockRef.current = { start: performance.now(), frame } }} />
           {speed}×
@@ -244,7 +270,7 @@ export function CairoSonification({ point, onPoint, onFrame, playRequest, onAnno
         <VolumeControl volume={volume} onChange={(value) => { onVolume(value); audioRef.current?.setVolume(value) }} />
       </div>
       <p className="cairo-timing mono">{TIMING_LABEL}</p>
-      <p className="live-region" role="status" aria-live="polite">{describeState(states)}</p>
+      <p className="live-region" role="status" aria-live="polite">{scene.name}. {describeState(states)}</p>
     </div>
   )
 }
