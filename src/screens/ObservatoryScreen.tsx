@@ -1,65 +1,28 @@
-import type { ExplorationMode, ObservationDataset } from '../data/observations'
-import type { Transport } from '../hooks/useTransport'
+import { useState } from 'react'
+import { AirQualityMap, type MapPoint } from '../components/observatory/AirQualityMap'
 import { CairoSonification } from '../components/observatory/CairoSonification'
-import { DatasetList } from '../components/observatory/DatasetList'
-import { ExplorationPanel } from '../components/observatory/ExplorationPanel'
-import { MappingPanel } from '../components/observatory/MappingPanel'
-import { ObservationView } from '../components/observatory/ObservationView'
 
 interface ObservatoryScreenProps {
-  datasets: ObservationDataset[]
-  dataset: ObservationDataset
-  mode: ExplorationMode
-  velocity: number
-  transport: Transport
   volume: number
-  onDataset: (id: string) => void
-  onMode: (mode: ExplorationMode) => void
-  onVelocity: (value: number) => void
   onVolume: (value: number) => void
-  onRestart: () => void
   onProbe: (message: string) => void
+  onRestart: () => void
 }
 
-export function ObservatoryScreen({
-  datasets,
-  dataset,
-  mode,
-  velocity,
-  transport,
-  volume,
-  onDataset,
-  onMode,
-  onVelocity,
-  onVolume,
-  onRestart,
-  onProbe,
-}: ObservatoryScreenProps) {
+export function ObservatoryScreen({ volume, onVolume, onProbe, onRestart }: ObservatoryScreenProps) {
+  const [point, setPoint] = useState<MapPoint>({ lat: 30.04, lon: 31.24, label: 'Cairo' })
+  const [frame, setFrame] = useState(0)
+  const [playRequest, setPlayRequest] = useState(0)
+  function choosePoint(next: MapPoint) {
+    setPoint(next)
+    setPlayRequest((value) => value + 1)
+  }
   return (
-    <section className="screen observatory" aria-label="Earth Signals observation workspace">
-      <DatasetList datasets={datasets} selectedId={dataset.id} onSelect={onDataset} />
-
-      <div className="workspace">
-        <ObservationView
-          key={dataset.id}
-          dataset={dataset}
-          mode={mode}
-          velocity={velocity}
-          progress={transport.progress}
-          duration={dataset.duration}
-          onProbe={onProbe}
-        />
-
-        <div className="low">
-          <ExplorationPanel
-            mode={mode}
-            velocity={velocity}
-            onMode={onMode}
-            onVelocity={onVelocity}
-          />
-          <MappingPanel mappings={dataset.mappings} playing={transport.playing} />
-          <CairoSonification onAnnounce={onProbe} volume={volume} onVolume={onVolume} onRestart={onRestart} />
-        </div>
+    <section className="screen observatory map-screen" aria-label="Air quality map and sonification">
+      <div className="map-workspace">
+        <AirQualityMap frame={frame} point={point} onPoint={choosePoint} onAnnounce={onProbe} />
+        <CairoSonification point={point} onPoint={choosePoint} onFrame={setFrame} playRequest={playRequest} onAnnounce={onProbe}
+          volume={volume} onVolume={onVolume} onRestart={onRestart} />
       </div>
     </section>
   )

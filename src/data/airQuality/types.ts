@@ -52,6 +52,8 @@ export interface SeriesResult {
   reasons: SeriesReason[]
   reasonCodes: SeriesReason[]
   metadata: LayerMetadata
+  source: 'detailed' | 'regional'
+  label: string
 }
 
 export interface DecodedLayer {

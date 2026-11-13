@@ -1,4 +1,5 @@
 import { cairoPresetsData } from './cairoPresets.ts'
+import { pm25PresetsData } from './presets.ts'
 import { canonicalLongitude, gridCellForCoordinate } from './coordinates.ts'
 import {
   AIR_QUALITY_TIMING,
@@ -16,12 +17,14 @@ import {
   type SeriesResult,
 } from './types.ts'
 
-interface CairoPreset {
+interface BundledPreset {
   latitude: number
   longitude: number
   metadata: Record<string, unknown>
   values: Array<number | null>
   flags: number[]
+  id?: string
+  label?: string
 }
 
 type UnknownRecord = Record<string, unknown>
@@ -211,15 +214,15 @@ function normalizedValue(rawValue: number, colorbar: ColorbarMetadata): number |
   return Number.isFinite(normalized) && normalized >= 0 && normalized <= 1 ? normalized : null
 }
 
-function presetForLayer(layer: LayerId): CairoPreset | null {
+function cairoPresetForLayer(layer: LayerId): BundledPreset | null {
   const candidate = (cairoPresetsData as unknown as Partial<Record<LayerId, unknown>>)[layer]
   if (!isRecord(candidate)) return null
   if (typeof candidate.latitude !== 'number' || typeof candidate.longitude !== 'number' || !isRecord(candidate.metadata)) return null
   if (!Array.isArray(candidate.values) || !Array.isArray(candidate.flags)) return null
-  return candidate as unknown as CairoPreset
+  return candidate as unknown as BundledPreset
 }
 
-function cairoMetadata(layer: LayerId, preset: CairoPreset): LayerMetadata {
+function cairoMetadata(layer: LayerId, preset: BundledPreset): LayerMetadata {
   return validateAndNormalizeMetadata({
     ...preset.metadata,
     layer,
@@ -228,7 +231,7 @@ function cairoMetadata(layer: LayerId, preset: CairoPreset): LayerMetadata {
   }, layer)
 }
 
-function cairoResult(layer: LayerId, preset: CairoPreset): SeriesResult {
+function cairoResult(layer: LayerId, preset: BundledPreset): SeriesResult {
   const metadata = cairoMetadata(layer, preset)
   const expectedLength = metadata.frames.count
   if (preset.values.length !== expectedLength || preset.flags.length !== expectedLength) {
@@ -258,7 +261,7 @@ function cairoResult(layer: LayerId, preset: CairoPreset): SeriesResult {
       reasons.push('ok')
     }
   }
-  return { layer, values, reasons, reasonCodes: reasons, metadata }
+  return { layer, values, reasons, reasonCodes: reasons, metadata, source: 'detailed', label: preset.label ?? 'Cairo' }
 }
 
 function assetPath(basePath: string, layer: LayerId, fileName: string): string {
@@ -266,6 +269,9 @@ function assetPath(basePath: string, layer: LayerId, fileName: string): string {
 }
 
 async function defaultDecompress(compressed: Uint8Array): Promise<Uint8Array> {
+  // Some hosts add Content-Encoding: gzip for .gz files, so the browser has
+  // already inflated them. Only inflate bytes that still carry the gzip magic.
+  if (compressed.length < 2 || compressed[0] !== 0x1f || compressed[1] !== 0x8b) return compressed
   if (typeof DecompressionStream === 'undefined') {
     throw new Error('gzip decompression requires native DecompressionStream')
   }
@@ -406,9 +412,14 @@ export function createAirQualityLoader(options: AirQualityLoaderOptions = {}): A
       throw new RangeError('latitude must be finite in [-90, 90] and longitude must be finite')
     }
     const wrappedLongitude = canonicalLongitude(longitude)
-    const preset = presetForLayer(layer)
-    if (preset && Math.abs(latitude - preset.latitude) <= CAIRO_TOLERANCE && Math.abs(wrappedLongitude - preset.longitude) <= CAIRO_TOLERANCE) {
-      return cairoResult(layer, preset)
+    const cairoPreset = cairoPresetForLayer(layer)
+    if (cairoPreset && Math.abs(latitude - cairoPreset.latitude) <= CAIRO_TOLERANCE && Math.abs(wrappedLongitude - cairoPreset.longitude) <= CAIRO_TOLERANCE) {
+      return cairoResult(layer, cairoPreset)
+    }
+    if (layer === 'pm25') {
+      const point = (pm25PresetsData as unknown as BundledPreset[]).find((item) =>
+        Math.abs(latitude - item.latitude) <= CAIRO_TOLERANCE && Math.abs(wrappedLongitude - item.longitude) <= CAIRO_TOLERANCE)
+      if (point) return cairoResult(layer, point)
     }
     const decoded = await loadLayer(layer)
     const cell = gridCellForCoordinate(latitude, longitude, decoded.metadata.grid)
@@ -430,7 +441,7 @@ export function createAirQualityLoader(options: AirQualityLoaderOptions = {}): A
         reasons.push('ok')
       }
     }
-    return { layer, values, reasons, reasonCodes: reasons, metadata: decoded.metadata }
+    return { layer, values, reasons, reasonCodes: reasons, metadata: decoded.metadata, source: 'regional', label: 'Regional 2° cell' }
   }
 
   const clearCache = (layer?: LayerId): void => {

@@ -1,5 +1,5 @@
 import * as Tone from 'tone'
-import { getSeries } from '../../data/loaders.ts'
+import type { SeriesResult } from '../../data/airQuality/types.ts'
 import {
   curveValue,
   earthJukeboxConfig,
@@ -106,26 +106,28 @@ export interface CairoAudio {
   dispose(): void
 }
 
-export async function createCairoAudio(): Promise<CairoAudio> {
+export async function createAudio(seriesByLayer: Partial<Record<EarthLayerId, SeriesResult>>): Promise<CairoAudio> {
   await Tone.start()
   const config = earthJukeboxConfig
-  const series = await Promise.all(config.voices.map((voice) => getSeries(config.preset.latitude, config.preset.longitude, voice.id)))
+  const voices = config.voices.filter((voice) => seriesByLayer[voice.id])
+  if (voices.length === 0) throw new Error('No sonification series available')
+  const total = seriesByLayer[voices[0].id]!.values.length
   const nodes = new Map<EarthLayerId, VoiceNode>()
-  for (const voice of config.voices) {
+  for (const voice of voices) {
     nodes.set(voice.id, voice.voice === 'lead' ? createLead(voice) : voice.voice === 'pad' ? createPad(voice) : createPulse(voice))
   }
-  const enabled = new Map<EarthLayerId, boolean>(config.voices.map((voice) => [voice.id, voice.enabledByDefault]))
+  const enabled = new Map<EarthLayerId, boolean>(voices.map((voice) => [voice.id, voice.enabledByDefault]))
   const listeners = new Set<StateListener>()
   let frame = 0
   const states = (): Record<EarthLayerId, number | null> => Object.fromEntries(
-    config.voices.map((voice, index) => [voice.id, series[index].values[frame] ?? null]),
+    voices.map((voice) => [voice.id, seriesByLayer[voice.id]?.values[frame] ?? null]),
   ) as Record<EarthLayerId, number | null>
 
   const apply = () => {
     const current = states()
-    config.voices.forEach((voice, index) => {
+    voices.forEach((voice) => {
       const node = nodes.get(voice.id)!
-      const value = series[index].values[frame]
+      const value = seriesByLayer[voice.id]?.values[frame] ?? null
       if (!enabled.get(voice.id) || value === null) node.rest()
       else node.set(value)
     })
@@ -135,7 +137,7 @@ export async function createCairoAudio(): Promise<CairoAudio> {
   return {
     async play() { apply() },
     pause() { nodes.forEach((node) => node.rest()) },
-    seek(nextFrame) { frame = Math.max(0, Math.min(series[0].values.length - 1, Math.floor(nextFrame))); apply() },
+    seek(nextFrame) { frame = Math.max(0, Math.min(total - 1, Math.floor(nextFrame))); apply() },
     setEnabled(layer, isEnabled) { enabled.set(layer, isEnabled); apply() },
     setVolume(volume) { Tone.getDestination().volume.rampTo(Tone.gainToDb(Math.max(0.0001, volume)), 0.1) },
     frame() { return frame },

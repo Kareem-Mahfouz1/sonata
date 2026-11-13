@@ -1779,3 +1779,29 @@
   font-size: 11px;
   line-height: 1.45;
 }
+
+/* ---------- equirectangular map workspace ---------- */
+.map-screen { display: block; }
+.map-workspace { display: grid; grid-template-rows: minmax(0, 1fr) 300px; height: 100%; min-height: 0; }
+.map-view { position: relative; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 16px 32px 6px; }
+.map-tools { position: relative; z-index: 4; display: flex; align-items: center; gap: 12px; min-height: 34px; }
+.map-search input { width: 220px; padding: 7px 10px; border: 1px solid var(--bd); border-radius: 7px; background: var(--bg); color: var(--tx); font-size: 12px; }
+.map-results { position: absolute; top: 38px; left: 0; width: 260px; margin: 0; padding: 4px; list-style: none; border: 1px solid var(--bd); border-radius: 8px; background: var(--deep); box-shadow: 0 12px 30px #0008; }
+.map-results button { width: 100%; display: flex; justify-content: space-between; padding: 7px 8px; border-radius: 5px; color: var(--tx2); font-size: 12px; text-align: left; }
+.map-results button:hover, .map-results button:focus-visible { background: var(--slate); color: var(--tx); }
+.map-results small { color: var(--mut); }
+.map-source { margin-left: auto; color: var(--mut); font-size: 10px; white-space: nowrap; }
+.map-canvas { width: 100%; min-height: 0; flex: 1; aspect-ratio: 2 / 1; max-height: calc(100% - 48px); border: 1px solid var(--bd); border-radius: 8px; background: #0b1220; image-rendering: pixelated; cursor: crosshair; outline-offset: 3px; }
+.map-canvas:focus-visible { outline: 2px solid var(--blue); }
+.map-foot { display: flex; gap: 16px; justify-content: space-between; align-items: center; color: var(--mut); font-size: 10px; }
+.map-legend { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.map-swatch { display: inline-block; width: 12px; height: 12px; border: 1px solid #7f8b9b; background: repeating-linear-gradient(45deg, #3a424e 0 3px, #aab6c7 3px 4px); }
+.preset-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.preset-btn { padding: 4px 8px; border: 1px solid var(--bd); border-radius: 5px; background: var(--bg); color: var(--tx2); font-size: 10px; white-space: nowrap; }
+.preset-btn.is-active { border-color: var(--blue); color: var(--blue); }
+.story-btn { margin-left: auto; border-color: #3b5a85; }
+@media (max-width: 900px) {
+  .map-workspace { grid-template-rows: minmax(0, 1fr) 340px; }
+  .map-view { padding: 10px 12px 4px; }
+  .map-foot { flex-wrap: wrap; }
+}
