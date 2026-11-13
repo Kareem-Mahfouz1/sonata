@@ -1,4 +1,6 @@
-export type ElementKind = 'chlorophyll' | 'aerosol' | 'thermal' | 'oxygen' | 'vegetation'
+import type { VoiceSpec } from '../audio/sonification'
+
+export type ElementKind = 'chlorophyll' | 'aerosol' | 'thermal' | 'ozone' | 'vegetation' | 'dust'
 
 export interface ObservationElement {
   id: string
@@ -7,15 +9,13 @@ export interface ObservationElement {
   category: string
   descriptor: string
   color: string
-  light: string
   kind: ElementKind
   size: number
-  left: string
-  top: string
-  driftX: string
-  driftY: string
-  floatDuration: string
-  floatDelay: string
+  /** Bubble centre as a percentage of the observation field. */
+  x: number
+  y: number
+  glyph?: string
+  voice: VoiceSpec
 }
 
 export const elements: ObservationElement[] = [
@@ -24,79 +24,72 @@ export const elements: ObservationElement[] = [
     name: 'Oceanic Chlorophyll',
     category: 'Derived feature',
     descriptor: 'Freq Mod // Surface',
-    color: '#2f9c9a',
-    light: '#9fe4dd',
+    color: '#78B9BC',
     kind: 'chlorophyll',
-    size: 150,
-    left: '5%',
-    top: '55%',
-    driftX: '10px',
-    driftY: '-14px',
-    floatDuration: '11s',
-    floatDelay: '-2s',
+    size: 148,
+    x: 28.4,
+    y: 35,
+    voice: { frequency: 220, type: 'sine', lfo: 0.4, depth: 8 },
   },
   {
     id: 'aerosols',
     name: 'Atmospheric Aerosols',
     category: 'Atmospheric constituent',
     descriptor: 'Amplitude // Cloud',
-    color: '#8e84c4',
-    light: '#d8d2f4',
+    color: '#A39BCB',
     kind: 'aerosol',
-    size: 134,
-    left: '17%',
-    top: '13%',
-    driftX: '-8px',
-    driftY: '12px',
-    floatDuration: '15s',
-    floatDelay: '-6s',
+    size: 176,
+    x: 66,
+    y: 25,
+    voice: { frequency: 329.6, type: 'triangle', lfo: 0.25, depth: 3 },
   },
   {
     id: 'sst',
     name: 'Sea Surface Temp',
     category: 'Scientific variable',
     descriptor: 'Distortion // Thermal',
-    color: '#5c88ba',
-    light: '#c3dcf5',
+    color: '#729BCB',
     kind: 'thermal',
-    size: 126,
-    left: '73%',
-    top: '16%',
-    driftX: '12px',
-    driftY: '10px',
-    floatDuration: '13s',
-    floatDelay: '-4s',
+    size: 124,
+    x: 47.5,
+    y: 58,
+    voice: { frequency: 110, type: 'sawtooth', lfo: 0.9, depth: 3, gain: 0.06 },
   },
   {
-    id: 'oxygen',
-    name: 'Oxygen',
+    id: 'ozone',
+    name: 'Ozone O₃',
     category: 'Atmospheric constituent',
-    descriptor: 'Air // Suspension',
-    color: '#8a7bd1',
-    light: '#ded6ff',
-    kind: 'oxygen',
-    size: 116,
-    left: '79%',
-    top: '57%',
-    driftX: '-11px',
-    driftY: '-12px',
-    floatDuration: '9s',
-    floatDelay: '-1s',
+    descriptor: 'Pitch // Stratosphere',
+    color: '#B07BE0',
+    kind: 'ozone',
+    size: 100,
+    x: 19.5,
+    y: 49,
+    glyph: 'O₃',
+    voice: { frequency: 165, type: 'sine', lfo: 0.3, depth: 2 },
   },
   {
     id: 'vegetation',
     name: 'Vegetation',
     category: 'Observation category',
-    descriptor: 'Harmonics // Canopy',
-    color: '#b58a55',
-    light: '#f0d5ac',
+    descriptor: 'Timbre // Land',
+    color: '#E0883E',
     kind: 'vegetation',
-    size: 140,
-    left: '57%',
-    top: '67%',
-    driftX: '8px',
-    driftY: '-10px',
-    floatDuration: '17s',
-    floatDelay: '-8s',
+    size: 112,
+    x: 34.4,
+    y: 74.5,
+    voice: { frequency: 261.6, type: 'triangle', lfo: 0.5, depth: 4 },
+  },
+  {
+    id: 'dust',
+    name: 'Dust Plume',
+    category: 'Derived feature',
+    descriptor: 'Filter // Desert',
+    color: '#D6B477',
+    kind: 'dust',
+    size: 96,
+    x: 42.4,
+    y: 20,
+    voice: { frequency: 392, type: 'sine', lfo: 0.7, depth: 5 },
   },
 ]

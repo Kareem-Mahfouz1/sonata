@@ -1,56 +1,45 @@
 :root {
   color-scheme: dark;
 
-  /* Colour system — Cosmic Observatory */
-  --midnight-navy: #0b1220;
-  --deep-observatory: #111c2d;
-  --elevated-slate: #19273a;
-  --observatory-border: #29394d;
-  --text-primary: #e5eaf1;
-  --text-secondary: #9aa9bc;
-  --text-muted: #718198;
-  --dusty-blue: #729bcb;
-  --soft-teal: #78b9bc;
-  --muted-lavender: #a39bcb;
-  --earth-green: #80b99a;
-  --warning: #d6b477;
-  --error: #d98989;
+  /* Cosmic Observatory palette */
+  --bg: #0b1220;
+  --deep: #111c2d;
+  --slate: #19273a;
+  --bd: #29394d;
+  --tx: #e5eaf1;
+  --tx2: #9aa9bc;
+  --mut: #8394ab;
+  --blue: #729bcb;
+  --teal: #78b9bc;
+  --lav: #a39bcb;
+  --green: #80b99a;
+  --warn: #d6b477;
+  --red: #e86a7c;
 
   /* Layout */
-  --rail-width: 64px;
-  --sidebar-width: 394px;
+  --rail: 58px;
+  --aside: 300px;
+  --low: 190px;
 
   /* Radii */
-  --radius-sm: 6px;
-  --radius-control: 8px;
-  --radius-panel: 12px;
-  --radius-card: 14px;
-  --radius-large: 16px;
-  --radius-pill: 999px;
-
-  /* 8px spacing system */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 16px;
-  --space-4: 24px;
-  --space-5: 32px;
-  --space-6: 48px;
-  --space-7: 64px;
+  --r-sm: 5px;
+  --r-control: 8px;
+  --r-card: 12px;
+  --r-frame: 14px;
+  --r-panel: 26px;
 
   /* Type */
-  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-  --font-ui: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+  --font-display: 'Space Grotesk', Inter, sans-serif;
+  --font-ui: Inter, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
   /* Motion */
-  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-hover: 180ms;
-  --dur-press: 140ms;
-  --dur-select: 520ms;
-  --dur-panel: 380ms;
+  --eo: cubic-bezier(0.16, 1, 0.3, 1);
+  --hover: 200ms;
+  --panel: 380ms;
 
-  /* Elevation */
-  --shadow-panel: 0 24px 60px -32px rgba(0, 0, 0, 0.9);
-  --edge: rgba(41, 57, 77, 0.6);
+  /* Pointer state, written by AmbientField */
+  --sx: 0;
+  --sy: 0;
+  --level: 0;
 }

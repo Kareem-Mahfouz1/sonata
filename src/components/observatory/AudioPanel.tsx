@@ -1,6 +1,8 @@
+import type { CSSProperties } from 'react'
 import type { Transport } from '../../hooks/useTransport'
 import { formatTime } from '../../lib/selection'
 import { Icon } from '../ui/Icon'
+import { PlayButton } from '../ui/PlayButton'
 import { VolumeControl } from '../ui/VolumeControl'
 import { Waveform } from './Waveform'
 
@@ -24,42 +26,32 @@ export function AudioPanel({
   onRestart,
 }: AudioPanelProps) {
   return (
-    <section className="panel audio-panel" aria-labelledby="audio-heading">
-      <h2 id="audio-heading" className="sr-only">
-        Audio signal and playback
-      </h2>
-      <span className="panel-tag">Prototype</span>
+    <div className="low-panel audio-panel" data-reveal style={{ '--i': 2 } as CSSProperties}>
+      <p className="lbl mono">
+        <span>Sonification</span>
+        <span className="lbl-note">Prototype audio</span>
+      </p>
       <Waveform
         seed={seed}
+        duration={duration}
         progress={transport.progress}
         playing={transport.playing}
-        duration={duration}
         onSeek={transport.seek}
       />
-      <div className="transport">
-        <div className="timecode" aria-label={`${formatTime(transport.progress)} of ${formatTime(duration)}`}>
-          <span>{formatTime(transport.progress)}</span>
-          <span className="timecode-total">/ {formatTime(duration)}</span>
-        </div>
-        <button
-          type="button"
-          className="icon-button transport-restart"
-          aria-label="Restart playback"
-          onClick={onRestart}
-        >
-          <Icon name="restart" size={17} />
+      <div className="ctl mono">
+        <span className="ctl-time">
+          {formatTime(transport.progress)} / {formatTime(duration)}
+        </span>
+        <button type="button" className="ico" aria-label="Restart playback" onClick={onRestart}>
+          <Icon name="restart" />
         </button>
-        <button
-          type="button"
-          className="play-button"
-          aria-label={transport.playing ? 'Pause' : 'Play'}
-          aria-pressed={transport.playing}
+        <PlayButton
+          playing={transport.playing}
+          label={transport.playing ? 'Pause playback' : 'Play playback'}
           onClick={onToggle}
-        >
-          <Icon name={transport.playing ? 'pause' : 'play'} size={22} />
-        </button>
+        />
         <VolumeControl volume={volume} onChange={onVolume} />
       </div>
-    </section>
+    </div>
   )
 }

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --test test/selection.test.ts",
+    "test": "node --test test/selection.test.ts test/screens.test.ts",
     "preview": "vite preview"
   },
   "devDependencies": {

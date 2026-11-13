@@ -1,106 +1,107 @@
+import type { CSSProperties } from 'react'
 import type { ObservationElement } from '../data/elements'
-import type { Transport } from '../hooks/useTransport'
 import { MAX_ELEMENTS } from '../lib/selection'
-import { CombinedSonification } from '../components/fun/CombinedSonification'
 import { ElementBubble } from '../components/fun/ElementBubble'
+import { SignalLines } from '../components/fun/SignalLines'
 import { SynthesisPanel } from '../components/fun/SynthesisPanel'
 
 interface FunModeScreenProps {
   elements: ObservationElement[]
   selected: ObservationElement[]
-  transport: Transport
+  playing: boolean
+  progress: number
   duration: number
   volume: number
+  shake: number
   onToggleElement: (id: string) => void
   onClear: () => void
   onVolume: (value: number) => void
   onPlayToggle: () => void
-  onRestart: () => void
 }
+
+const title = 'Discover the elements.'
 
 export function FunModeScreen({
   elements,
   selected,
-  transport,
+  playing,
+  progress,
   duration,
   volume,
+  shake,
   onToggleElement,
   onClear,
   onVolume,
   onPlayToggle,
-  onRestart,
 }: FunModeScreenProps) {
   return (
-    <main className="fun">
-      <aside className="fun-aside" aria-label="Discovery mode and active synthesis">
-        <div className="fun-head">
-          <p className="eyebrow">Discovery Mode</p>
-          <p className="fun-source mono">Aqua Satellite // MODIS</p>
-          <h1>Discover the elements.</h1>
-          <p className="lead">
-            Explore individual components of this planetary observation. Select up to {MAX_ELEMENTS}{' '}
-            elements to map their physical properties into a combined auditory experience.
-          </p>
-          <span
-            className="live-field"
-            title="Interface state for the prototype; no live NASA feed is connected."
-          >
-            <span className="status-dot" aria-hidden="true" />
-            Live Observation Field
-            <em className="live-field-tag mono">demo</em>
-          </span>
+    <section className="screen fun" aria-label="Discovery Mode">
+      <div className="fun-head" data-reveal>
+        <div className="fun-meta">
+          <span className="badge mono">Discovery Mode</span>
+          <span className="fun-source mono">AQUA SATELLITE // MODIS</span>
         </div>
-
-        <SynthesisPanel selected={selected} onRemove={onToggleElement} onClear={onClear} />
-      </aside>
-
-      <div className="fun-stage">
-        <div className="stage-inner">
-          <span className="stage-stars" aria-hidden="true" />
-          <span className="stage-orbit stage-orbit--a" aria-hidden="true" />
-          <span className="stage-orbit stage-orbit--b" aria-hidden="true" />
-          <span className="earth-glow" aria-hidden="true" />
-          <div
-            className="earth"
-            role="img"
-            aria-label="Earth photographed in natural colour from space"
-          >
-            <img src="/images/earth-globe.jpg" alt="" />
-            <span className="earth-limb" aria-hidden="true" />
-          </div>
-
-          {elements.map((element) => {
-            const isSelected = selected.some((item) => item.id === element.id)
-            return (
-              <ElementBubble
-                key={element.id}
-                element={element}
-                selected={isSelected}
-                playing={transport.playing && isSelected}
-                onToggle={onToggleElement}
-              />
-            )
-          })}
-
-          <p className="stage-credit mono">Earth imagery · NASA / Apollo 17 · public domain</p>
-        </div>
-
-        <CombinedSonification
-          transport={transport}
-          duration={duration}
-          volume={volume}
-          ready={selected.length > 0}
-          selectedCount={selected.length}
-          onVolume={onVolume}
-          onToggle={onPlayToggle}
-          onRestart={onRestart}
-        />
-
-        <p className="fun-note">
-          Component categories and mappings are provisional design placeholders. Motion is an artistic
-          interpretation, not a scientific process.
+        <h2 className="fun-title hd" aria-label={title}>
+          {title.split(' ').map((word, index) => (
+            <span key={word} style={{ '--i': index } as CSSProperties} aria-hidden="true">
+              {word}
+            </span>
+          ))}
+        </h2>
+        <p className="fun-lead">
+          Explore individual components of this planetary observation. Select up to {MAX_ELEMENTS}{' '}
+          elements to map their physical properties into a combined auditory experience.
         </p>
       </div>
-    </main>
+
+      <div className="live-field mono" data-reveal style={{ '--i': 1 } as CSSProperties}>
+        <i aria-hidden="true" />
+        Live Observation Field
+        <em className="live-tag mono">demo</em>
+      </div>
+
+      <div
+        className="earth"
+        role="img"
+        aria-label="Earth photographed in natural colour from space"
+      >
+        <img src="/images/earth-globe.jpg" alt="" draggable={false} />
+        <span className="earth-clouds" aria-hidden="true" />
+        <span className="earth-limb" aria-hidden="true" />
+      </div>
+
+      <SignalLines active={selected} />
+
+      <div className="bubble-field">
+        {elements.map((element, index) => (
+          <ElementBubble
+            key={element.id}
+            element={element}
+            index={index}
+            selected={selected.some((item) => item.id === element.id)}
+            playing={playing}
+            onToggle={onToggleElement}
+          />
+        ))}
+      </div>
+
+      <SynthesisPanel
+        selected={selected}
+        playing={playing}
+        progress={progress}
+        duration={duration}
+        volume={volume}
+        shake={shake}
+        onRemove={onToggleElement}
+        onClear={onClear}
+        onPlay={onPlayToggle}
+        onVolume={onVolume}
+      />
+
+      <p className="fun-note mono">
+        Component labels are illustrative placeholders, not processed observation results. Audio is a
+        synthesized prototype. Earth imagery: NASA / Apollo 17.
+      </p>
+    </section>
   )
 }

@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react'
+
 interface SegmentedControlProps<T extends string> {
   label: string
   value: T
@@ -11,8 +13,14 @@ export function SegmentedControl<T extends string>({
   options,
   onChange,
 }: SegmentedControlProps<T>) {
+  const index = Math.max(
+    0,
+    options.findIndex((option) => option.value === value),
+  )
+
   return (
-    <div className="segmented" role="group" aria-label={label}>
+    <div className="seg" role="group" aria-label={label} style={{ '--index': index } as CSSProperties}>
+      <span className="seg-pill" aria-hidden="true" />
       {options.map((option) => (
         <button
           key={option.value}

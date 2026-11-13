@@ -1,90 +1,63 @@
 import type { ReactNode } from 'react'
 
 const paths: Record<string, ReactNode> = {
-  orbit: (
+  planet: (
     <>
-      <circle cx="12" cy="12" r="7.5" />
-      <ellipse cx="12" cy="12" rx="10.5" ry="4" transform="rotate(-32 12 12)" />
-      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M15.5 8.5l-2 5-5 2 2-5z" />
     </>
   ),
-  activity: <path d="M2.5 12.5h4L9.5 5l4 14 3-8.5h5" />,
-  headphones: (
+  signal: <path d="M3 14h4l3-7 4 10 3-3h4" />,
+  orbits: (
     <>
-      <path d="M3.5 14v-1.5a8.5 8.5 0 0 1 17 0V14" />
-      <path d="M6.5 14.5h1.2a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H6.5A1.5 1.5 0 0 1 5 19v-3a1.5 1.5 0 0 1 1.5-1.5Z" />
-      <path d="M17.5 14.5h-1.2a1.5 1.5 0 0 0-1.5 1.5v3a1.5 1.5 0 0 0 1.5 1.5h1.2a1.5 1.5 0 0 0 1.5-1.5v-3a1.5 1.5 0 0 0-1.5-1.5Z" />
+      <ellipse cx="12" cy="12" rx="9" ry="4" />
+      <ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(60 12 12)" />
+      <ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(120 12 12)" />
     </>
   ),
+  headphones: <path d="M4 16v-4a8 8 0 0116 0v4M4 15h3v5H4zM17 15h3v5h-3z" />,
   search: (
     <>
       <circle cx="11" cy="11" r="6.5" />
       <path d="m16 16 4 4" />
     </>
   ),
-  arrow: (
+  focus: <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />,
+  restart: <path d="M4 12a8 8 0 108-8M4 4v5h5" />,
+  play: <path d="M7 4l13 8-13 8z" fill="currentColor" stroke="none" />,
+  pause: (
     <>
-      <path d="M4 12h15" />
-      <path d="m14 7 5 5-5 5" />
-    </>
-  ),
-  sliders: (
-    <>
-      <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
-      <circle cx="15" cy="7" r="2" />
-      <circle cx="9" cy="17" r="2" />
-    </>
-  ),
-  restart: (
-    <>
-      <path d="M4 5v5h5" />
-      <path d="M4.8 14a7.5 7.5 0 1 0 1.2-7.8L4 10" />
+      <path d="M6 4h4v16H6z" fill="currentColor" stroke="none" />
+      <path d="M14 4h4v16h-4z" fill="currentColor" stroke="none" />
     </>
   ),
   volume: (
     <>
-      <path d="M4 9.5h3L11.5 6v12L7 14.5H4Z" />
-      <path d="M15 9a4.5 4.5 0 0 1 0 6" />
-      <path d="M17.8 6.5a8 8 0 0 1 0 11" />
+      <path d="M4 9h4l5-4v14l-5-4H4z" />
+      <path d="M16 9a4 4 0 010 6" />
     </>
   ),
   'volume-x': (
     <>
-      <path d="M4 9.5h3L11.5 6v12L7 14.5H4Z" />
-      <path d="m15.5 9.5 4 5M19.5 9.5l-4 5" />
+      <path d="M4 9h4l5-4v14l-5-4H4z" />
+      <path d="m16 10 4 4M20 10l-4 4" />
     </>
   ),
-  play: <path d="M8 5.5v13l11-6.5Z" fill="currentColor" stroke="none" />,
-  pause: (
-    <>
-      <rect x="7" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none" />
-      <rect x="13.4" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none" />
-    </>
-  ),
-  check: <path d="m5 12.5 4.5 4.5L19 7" />,
   close: <path d="M6 6l12 12M18 6 6 18" />,
-  maximize: (
+  gear: (
     <>
-      <path d="M9 4H5a1 1 0 0 0-1 1v4M15 4h4a1 1 0 0 1 1 1v4M9 20H5a1 1 0 0 1-1-1v-4M15 20h4a1 1 0 0 0 1-1v-4" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 4v2M12 18v2M4 12h2M18 12h2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M17.7 6.3l-1.4 1.4M7.7 16.3l-1.4 1.4" />
     </>
   ),
-  database: (
+  drop: <path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z" />,
+  thermometer: <path d="M10 4a2 2 0 014 0v9a4 4 0 11-4 0z" />,
+  leaf: <path d="M5 19c0-8 5-13 14-14 0 9-5 14-14 14zM5 19l7-7" />,
+  dust: (
     <>
-      <ellipse cx="12" cy="6" rx="7" ry="3" />
-      <path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6" />
-      <path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" />
-    </>
-  ),
-  waveform: (
-    <>
-      <path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2" />
-    </>
-  ),
-  'chevron-left': <path d="m14 6-6 6 6 6" />,
-  sparkle: (
-    <>
-      <path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4" />
-      <circle cx="12" cy="12" r="2.4" />
+      <circle cx="9" cy="10" r="2" />
+      <circle cx="15" cy="13" r="2" />
+      <circle cx="10" cy="16" r="1.5" />
     </>
   ),
 }
@@ -97,7 +70,7 @@ interface IconProps {
   className?: string
 }
 
-export function Icon({ name, size = 18, className }: IconProps) {
+export function Icon({ name, size = 20, className }: IconProps) {
   return (
     <svg
       className={className}

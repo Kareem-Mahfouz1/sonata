@@ -1,32 +1,31 @@
+import type { CSSProperties } from 'react'
 import type { Mapping } from '../../data/observations'
 import { Icon } from '../ui/Icon'
 
 interface MappingPanelProps {
   mappings: Mapping[]
+  playing: boolean
 }
 
-export function MappingPanel({ mappings }: MappingPanelProps) {
+export function MappingPanel({ mappings, playing }: MappingPanelProps) {
   return (
-    <section className="panel mapping-panel" aria-labelledby="mapping-heading">
-      <div className="panel-head">
-        <h2 id="mapping-heading" className="panel-label">
-          Data Mapping
-        </h2>
-        <Icon name="sliders" size={15} />
-      </div>
-      <ul className="mapping-list">
+    <div className="low-panel" data-reveal style={{ '--i': 1 } as CSSProperties}>
+      <p className="lbl mono">
+        <span>
+          Data Mapping <em className="lbl-note">illustrative</em>
+        </span>
+        <Icon name="gear" size={14} />
+      </p>
+      <div className={`mapping ${playing ? 'is-playing' : ''}`}>
         {mappings.map((mapping) => (
-          <li key={mapping.variable} className="mapping-row">
-            <span className="mapping-dot" style={{ background: mapping.color }} aria-hidden="true" />
+          <div key={mapping.variable} className="mapping-row">
+            <i style={{ background: mapping.color }} aria-hidden="true" />
             <span className="mapping-variable">{mapping.variable}</span>
-            <span className="mapping-arrow" aria-hidden="true">
-              <Icon name="arrow" size={14} />
-            </span>
-            <span className="mapping-destination">{mapping.destination}</span>
-          </li>
+            <span className="flow" aria-hidden="true" />
+            <span className="mapping-pill mono">{mapping.destination}</span>
+          </div>
         ))}
-      </ul>
-      <p className="panel-note">Mappings are illustrative until the sonification spec is approved.</p>
-    </section>
+      </div>
+    </div>
   )
 }

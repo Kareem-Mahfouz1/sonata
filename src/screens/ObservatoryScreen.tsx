@@ -1,13 +1,10 @@
-import { useState } from 'react'
-import { announce } from '../a11y/liveRegion'
 import type { ExplorationMode, ObservationDataset } from '../data/observations'
 import type { Transport } from '../hooks/useTransport'
-import { Icon } from '../components/ui/Icon'
 import { AudioPanel } from '../components/observatory/AudioPanel'
 import { DatasetList } from '../components/observatory/DatasetList'
 import { ExplorationPanel } from '../components/observatory/ExplorationPanel'
 import { MappingPanel } from '../components/observatory/MappingPanel'
-import { ObservationViewer } from '../components/observatory/ObservationViewer'
+import { ObservationView } from '../components/observatory/ObservationView'
 
 interface ObservatoryScreenProps {
   datasets: ObservationDataset[]
@@ -22,6 +19,7 @@ interface ObservatoryScreenProps {
   onVolume: (value: number) => void
   onPlayToggle: () => void
   onRestart: () => void
+  onProbe: (message: string) => void
 }
 
 export function ObservatoryScreen({
@@ -37,58 +35,31 @@ export function ObservatoryScreen({
   onVolume,
   onPlayToggle,
   onRestart,
+  onProbe,
 }: ObservatoryScreenProps) {
-  const [focus, setFocus] = useState(false)
-
   return (
-    <div className={`observatory ${focus ? 'is-focus' : ''}`}>
-      <aside className="sidebar" aria-label="Dataset discovery">
-        <DatasetList datasets={datasets} selectedId={dataset.id} onSelect={onDataset} />
-      </aside>
+    <section className="screen observatory" aria-label="Earth Signals observation workspace">
+      <DatasetList datasets={datasets} selectedId={dataset.id} onSelect={onDataset} />
 
-      <section className="workspace" aria-label="Observation workspace">
-        <header className="topbar">
-          <div className="topbar-left">
-            <span className="code-pill">
-              <Icon name="database" size={13} />
-              {dataset.code}
-            </span>
-            <span className="coords mono">
-              LAT: {dataset.lat} <span className="coords-sep">·</span> LNG: {dataset.lng}
-            </span>
-          </div>
-          <button
-            type="button"
-            className={`ghost-button focus-button ${focus ? 'is-active' : ''}`}
-            aria-pressed={focus}
-            onClick={() => {
-              setFocus((current) => !current)
-              announce(focus ? 'Focus Mode off. Dataset list restored.' : 'Focus Mode on. Dataset list hidden.')
-            }}
-          >
-            <Icon name="maximize" size={14} />
-            Focus Mode
-          </button>
-        </header>
+      <div className="workspace">
+        <ObservationView
+          key={dataset.id}
+          dataset={dataset}
+          mode={mode}
+          velocity={velocity}
+          progress={transport.progress}
+          duration={dataset.duration}
+          onProbe={onProbe}
+        />
 
-        <div className="stage">
-          <ObservationViewer
-            key={dataset.id}
-            dataset={dataset}
-            mode={mode}
-            velocity={velocity}
-            onProbe={(label) => announce(`Probe locked. ${label}`)}
-          />
-        </div>
-
-        <div className="panels">
+        <div className="low">
           <ExplorationPanel
             mode={mode}
             velocity={velocity}
             onMode={onMode}
             onVelocity={onVelocity}
           />
-          <MappingPanel mappings={dataset.mappings} />
+          <MappingPanel mappings={dataset.mappings} playing={transport.playing} />
           <AudioPanel
             transport={transport}
             duration={dataset.duration}
@@ -99,7 +70,7 @@ export function ObservatoryScreen({
             onRestart={onRestart}
           />
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
   )
 }

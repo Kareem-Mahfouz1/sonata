@@ -11,12 +11,12 @@ export function VolumeControl({ volume, onChange }: VolumeControlProps) {
     <div className="volume">
       <button
         type="button"
-        className="icon-button"
+        className="ico"
         aria-label={volume === 0 ? 'Unmute' : 'Mute'}
         aria-pressed={volume === 0}
-        onClick={() => onChange(volume === 0 ? 0.7 : 0)}
+        onClick={() => onChange(volume === 0 ? 0.6 : 0)}
       >
-        <Icon name={volume === 0 ? 'volume-x' : 'volume'} size={18} />
+        <Icon name={volume === 0 ? 'volume-x' : 'volume'} />
       </button>
       <div className="volume-pop">
         <Slider

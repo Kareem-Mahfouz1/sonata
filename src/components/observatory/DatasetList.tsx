@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+import type { CSSProperties, PointerEvent } from 'react'
 import type { ObservationDataset } from '../../data/observations'
+import { burst } from '../../lib/fx'
 import { Icon } from '../ui/Icon'
 
 interface DatasetListProps {
@@ -22,18 +24,31 @@ export function DatasetList({ datasets, selectedId, onSelect }: DatasetListProps
     )
   }, [datasets, query])
 
-  return (
-    <>
-      <header className="sidebar-head">
-        <h1>Earth Signals</h1>
-        <p>
-          Discover patterns in planetary data through sound. Select an observation dataset to begin
-          sonification.
-        </p>
-      </header>
+  function tilt(event: PointerEvent<HTMLButtonElement>) {
+    const rect = event.currentTarget.getBoundingClientRect()
+    const ry = ((event.clientX - rect.left) / rect.width - 0.5) * 10
+    const rx = -((event.clientY - rect.top) / rect.height - 0.5) * 10
+    event.currentTarget.style.setProperty('--ry', `${ry}deg`)
+    event.currentTarget.style.setProperty('--rx', `${rx}deg`)
+  }
 
-      <label className="search">
-        <Icon name="search" size={16} />
+  function resetTilt(event: PointerEvent<HTMLButtonElement>) {
+    event.currentTarget.style.setProperty('--rx', '0deg')
+    event.currentTarget.style.setProperty('--ry', '0deg')
+  }
+
+  return (
+    <aside className="sidebar" aria-label="Dataset discovery">
+      <h1 className="sidebar-title hd" data-reveal style={{ '--i': 0 } as CSSProperties}>
+        Earth Signals
+      </h1>
+      <p className="sidebar-lead" data-reveal style={{ '--i': 1 } as CSSProperties}>
+        Discover patterns in planetary data through sound. Select an observation dataset to begin
+        sonification.
+      </p>
+
+      <label className="search" data-reveal style={{ '--i': 2 } as CSSProperties}>
+        <Icon name="search" size={15} />
         <input
           type="search"
           value={query}
@@ -43,50 +58,44 @@ export function DatasetList({ datasets, selectedId, onSelect }: DatasetListProps
         />
       </label>
 
-      <section className="dataset-section" aria-labelledby="active-observations">
-        <h2 id="active-observations" className="section-label">
-          Active Observations
-        </h2>
-        <div className="dataset-list">
-          {visible.map((dataset) => {
-            const selected = dataset.id === selectedId
-            return (
-              <button
-                key={dataset.id}
-                type="button"
-                className={`dataset-card ${selected ? 'is-selected' : ''}`}
-                aria-pressed={selected}
-                onClick={() => onSelect(dataset.id)}
-              >
-                <span className="dataset-media">
-                  <img src={dataset.image} alt="" loading="lazy" />
-                  <span className="dataset-media-shade" aria-hidden="true" />
-                  {dataset.live ? (
-                    <span className="live-pill">
-                      <span className="status-dot" aria-hidden="true" />
-                      Live Feed
-                    </span>
-                  ) : null}
-                </span>
-                <span className="dataset-body">
-                  <span className="dataset-title-row">
-                    <span className="dataset-title">{dataset.name}</span>
-                    {selected ? (
-                      <span className="dataset-signal" aria-hidden="true">
-                        <Icon name="waveform" size={16} />
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="dataset-subtitle">{dataset.subtitle}</span>
-                </span>
-              </button>
-            )
-          })}
-          {visible.length === 0 ? <p className="dataset-empty">No datasets match that search.</p> : null}
-        </div>
-      </section>
+      <p className="section-label mono" data-reveal style={{ '--i': 3 } as CSSProperties}>
+        Active Observations
+      </p>
 
-      <p className="sidebar-note">Design prototype · placeholder observations · NASA imagery</p>
-    </>
+      <div className="cards">
+        {visible.map((dataset, index) => {
+          const selected = dataset.id === selectedId
+          return (
+            <button
+              key={dataset.id}
+              type="button"
+              className={`card ${selected ? 'is-selected' : ''}`}
+              aria-pressed={selected}
+              data-reveal
+              style={{ '--i': 4 + index } as CSSProperties}
+              onPointerMove={tilt}
+              onPointerLeave={resetTilt}
+              onClick={(event) => {
+                const rect = event.currentTarget.getBoundingClientRect()
+                burst(rect.left + rect.width / 2, rect.top + 52, '#729BCB', 14)
+                onSelect(dataset.id)
+              }}
+            >
+              <span className="card-thumb">
+                <img src={dataset.image} alt="" loading="lazy" draggable={false} />
+                {dataset.live ? <span className="card-live mono">● Live Feed</span> : null}
+              </span>
+              <b>{dataset.name}</b>
+              <small>{dataset.subtitle}</small>
+            </button>
+          )
+        })}
+        {visible.length === 0 ? <p className="cards-empty">No datasets match that search.</p> : null}
+      </div>
+
+      <p className="sidebar-note mono">
+        Design prototype · placeholder observations · NASA imagery
+      </p>
+    </aside>
   )
 }

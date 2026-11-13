@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Earth Jukebox — Immersive</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B1220;--deep:#111C2D;--slate:#19273A;--bd:#29394D;--tx:#E5EAF1;--tx2:#9AA9BC;--mut:#8394AB;--blue:#729BCB;--teal:#78B9BC;--lav:#A39BCB;--red:#e86a7c;--eo:cubic-bezier(.16,1,.3,1);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+*{box-sizing:inherit;margin:0}
+html,body{height:100%;background:var(--bg);color:var(--tx);font:14px Inter,system-ui,sans-serif;overflow:hidden}
+.mono{font-family:'IBM Plex Mono',monospace}.hd{font-family:'Space Grotesk',Inter,sans-serif}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+canvas{position:fixed;inset:0;pointer-events:none}#bg{z-index:0}#fx{z-index:60}
+#glow{position:fixed;left:0;top:0;width:520px;height:520px;margin:-260px 0 0 -260px;background:radial-gradient(#729BCB1f,transparent 65%);pointer-events:none;z-index:1}
+#flash{position:fixed;inset:0;background:#cfe0ff;opacity:0;pointer-events:none;z-index:70}
+#app{position:relative;z-index:2;height:100%;min-width:900px;display:grid;grid-template-columns:58px 1fr;overflow:auto}
+nav{position:relative;border-right:1px solid var(--bd);background:#0b1220d9;display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:14px}
+.brand{width:36px;height:36px;border-radius:50%;border:1px solid var(--bd);display:grid;place-items:center;margin-bottom:14px;position:relative}
+.brand i{width:12px;height:12px;border-radius:50%;background:var(--blue);box-shadow:0 0 12px var(--blue)}
+.brand::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px dashed #729BCB66;animation:spin 12s linear infinite}
+.brand b{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--teal);left:50%;top:-2px;margin-left:-2px;transform-origin:2px 20px;animation:spin 5s linear infinite}
+nav .ind{position:absolute;left:7px;top:0;width:44px;height:44px;border-radius:10px;background:var(--slate);border:1px solid var(--bd);box-shadow:0 0 18px #729BCB44;transition:translate .5s var(--eo);z-index:0}
+nav button{position:relative;z-index:1;width:44px;height:44px;border-radius:10px;border:0;background:none;color:var(--tx2);cursor:pointer;display:grid;place-items:center;transition:color .2s,transform .2s}
+nav button:hover:not(:disabled){color:var(--tx);transform:scale(1.12)}nav button.on{color:var(--blue)}nav button:disabled{opacity:.5;cursor:default}
+nav svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sp{flex:1}.vt{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10px;color:var(--mut);letter-spacing:.1em}
+.av{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#c9b49a,#5a4a40);border:1px solid var(--bd)}
+.screen{display:none;height:100%;min-height:0;position:relative}.screen.on{display:block}
+#s1.on{display:grid;grid-template-columns:300px 1fr}
+aside{border-right:1px solid var(--bd);background:#111c2dcc;padding:24px 20px;overflow:auto}
+aside h1{font-size:26px;font-weight:400}aside p{color:var(--tx2);line-height:1.5;margin:10px 0 18px}
+.search{display:flex;gap:8px;align-items:center;border:1px solid var(--bd);border-radius:8px;padding:11px;background:var(--bg);color:var(--mut);font-size:12px;transition:border-color .3s,box-shadow .3s}.search:hover{border-color:var(--blue);box-shadow:0 0 16px #729BCB33}
+.sec{font-size:11px;letter-spacing:.08em;color:var(--mut);margin:22px 0 12px}
+.card{border:1px solid transparent;border-radius:12px;padding:10px;cursor:pointer;margin-bottom:12px;transition:transform .15s,border-color .3s,background .3s,box-shadow .3s;transform:perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));position:relative}
+.card:hover{border-color:var(--bd)}.card.sel{background:var(--slate);border-color:var(--blue);box-shadow:0 0 28px #729BCB2a}
+.th{height:96px;border-radius:7px;position:relative;overflow:hidden;margin-bottom:10px}
+.card.sel .th::after{content:'';position:absolute;top:0;bottom:0;width:40%;left:-40%;background:linear-gradient(90deg,transparent,#ffffff22,transparent);animation:sweep 3s ease-in-out infinite}
+.card b{font-weight:500;font-size:15px;display:block}.card small{color:var(--tx2);font-size:12px}
+.live{position:absolute;left:8px;bottom:6px;font-size:10px;color:var(--blue);animation:blink 1.6s infinite}
+.main{display:grid;grid-template-rows:1fr 190px;min-width:0;min-height:0}
+.view{position:relative;background-image:linear-gradient(#ffffff09 1px,transparent 1px),linear-gradient(90deg,#ffffff09 1px,transparent 1px);background-size:40px 40px;overflow:hidden;animation:grid 8s linear infinite}
+.chip{position:absolute;top:16px;font-size:12px;padding:8px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--deep)}
+.obs{position:absolute;left:8%;right:8%;top:16%;bottom:12%;border-radius:14px;border:1px solid var(--bd);overflow:hidden;box-shadow:0 30px 60px #000a,0 0 60px #729BCB14;transition:left .6s var(--eo),right .6s var(--eo),top .6s var(--eo),bottom .6s var(--eo),filter .6s;background:linear-gradient(120deg,#7186a3,#2d476b 55%,#16263f);cursor:crosshair}
+.cl{position:absolute;top:0;bottom:0;left:0;width:200%;background-size:50% 100%;animation:drift 70s linear infinite}
+.c1{background-image:radial-gradient(ellipse 18% 30% at 22% 30%,#e6edf8cc,transparent),radial-gradient(ellipse 20% 26% at 50% 62%,#c3d2e8bb,transparent),radial-gradient(ellipse 14% 22% at 38% 82%,#fffd,transparent),radial-gradient(ellipse 16% 24% at 70% 28%,#d6e0f0aa,transparent)}
+.c2{background-image:radial-gradient(ellipse 12% 14% at 30% 50%,#fff8,transparent),radial-gradient(ellipse 14% 18% at 62% 72%,#fff7,transparent),radial-gradient(ellipse 10% 12% at 78% 22%,#fff6,transparent);animation-duration:40s}
+.sat{position:absolute;right:2%;top:-4%;width:13%;height:70%;border-radius:20px 20px 40px 40px;background:linear-gradient(90deg,#8a7a68,#cfd3d8 40%,#5c6470);transform:rotate(14deg);animation:bob 7s ease-in-out infinite alternate;box-shadow:-20px 20px 40px #0006}
+.beam{position:absolute;top:0;bottom:0;left:0;width:2px;background:var(--teal);box-shadow:0 0 18px 2px var(--teal),-60px 0 60px 8px #78B9BC44;will-change:translate}
+.xh{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px;border:1px solid var(--teal);border-radius:50%;display:none;pointer-events:none;box-shadow:0 0 14px #78B9BC88}
+.xh::before,.xh::after{content:'';position:absolute;background:var(--teal);left:50%;top:50%}.xh::before{width:1px;height:70px;margin:-35px 0 0 0}.xh::after{height:1px;width:70px;margin:0 0 0 -35px}
+.meta{position:absolute;right:14px;bottom:10px;font-size:10px;color:#dbe3ef;text-align:right;line-height:1.7;text-shadow:0 1px 4px #000}
+.dot{position:absolute;width:8px;height:8px;margin:-4px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal)}
+.dot::after{content:'';position:absolute;inset:-6px;border:1px solid var(--teal);border-radius:50%;animation:rip 2.4s ease-out infinite}
+.low{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--bd);background:#111c2dd9;min-height:0}
+.low>div{padding:26px 28px;border-right:1px solid var(--bd);display:flex;flex-direction:column;min-width:0}.low>div:last-child{border:0}
+.lbl{font-size:11px;letter-spacing:.08em;color:var(--mut);display:flex;justify-content:space-between}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--bd);border-radius:8px;padding:4px;margin-top:18px;background:var(--bg);position:relative}
+.seg button{position:relative;z-index:1;background:none;border:0;color:var(--mut);padding:10px;border-radius:6px;cursor:pointer;font:inherit;font-size:13px;transition:color .3s}.seg button.on{color:var(--blue)}
+.seg .pill2{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);background:var(--slate);border:1px solid #3b5a85;border-radius:6px;transition:translate .45s var(--eo)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:linear-gradient(var(--bd),var(--bd)) center/100% 4px no-repeat;outline-offset:2px;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--blue);box-shadow:0 0 10px var(--blue);transition:transform .2s}input[type=range]:active::-webkit-slider-thumb{transform:scale(1.5)}
+.row{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:14px}.row i{width:8px;height:8px;border-radius:50%}
+.flow{flex:1;height:1px;margin:0 6px;background:repeating-linear-gradient(90deg,var(--mut) 0 4px,transparent 4px 9px);background-size:9px 1px}
+.playing .flow{background-image:repeating-linear-gradient(90deg,var(--teal) 0 4px,transparent 4px 9px);animation:fl .5s linear infinite}
+.pill{border:1px solid var(--bd);background:var(--bg);color:var(--tx2);padding:5px 10px;border-radius:5px;font-size:12px;min-width:92px;text-align:center;transition:.3s}.playing .pill{border-color:var(--teal);color:var(--tx);box-shadow:0 0 14px #78B9BC44}
+.wave{flex:1;display:flex;align-items:stretch;gap:9px;padding-bottom:8px}.wave i{flex:1;background:#6a86b3;border-radius:1px;min-width:2px;transform-origin:bottom;transition:background .15s}.wave i.hi{background:var(--red);box-shadow:0 0 10px var(--red)}
+.ctl{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--mut)}.ctl .t{flex:1}
+.play{position:relative;width:56px;height:56px;border-radius:50%;border:0;background:#fff;cursor:pointer;display:grid;place-items:center;color:var(--bg);transition:translate .25s var(--eo),transform .2s;flex:none}.play:active{transform:scale(.92)}
+.play svg{width:20px;height:20px;fill:currentColor}
+.play::before{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid #fff;opacity:0}.playing .play::before{animation:rip 1.6s ease-out infinite}
+.ico{background:none;border:0;color:var(--tx2);cursor:pointer;display:grid;place-items:center;width:44px;height:44px;transition:transform .3s var(--eo)}.ico:hover{transform:rotate(-90deg)}.ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
+#s2{overflow:hidden}
+.head{position:absolute;left:5%;top:5%;max-width:560px;z-index:5;pointer-events:none}
+.badge{font-size:11px;border:1px solid var(--bd);background:var(--slate);color:var(--blue);padding:4px 9px;border-radius:4px;margin-right:10px}
+.head h2{font-size:clamp(34px,4.6vw,56px);font-weight:500;margin:10px 0 14px;white-space:nowrap}.w{display:inline-block;margin-right:.25em}
+.head p{color:var(--tx2);font-size:16px;line-height:1.5;max-width:430px}
+.live2{position:absolute;right:3%;top:6%;border:1px solid var(--bd);background:var(--deep);padding:11px 20px;font-size:13px;display:flex;gap:12px;align-items:center;z-index:5}
+.live2 i{width:8px;height:8px;border-radius:50%;background:var(--teal);animation:blink 1.4s infinite}
+.earth{position:absolute;left:32%;top:10%;height:80%;aspect-ratio:1;border-radius:50%;overflow:hidden;background:#1d3a66;box-shadow:0 0 100px #4a7fc044}
+.earth .cl{background-size:50% 100%}
+.tex{background-image:radial-gradient(ellipse 14% 20% at 22% 40%,#7a7458,transparent),radial-gradient(ellipse 12% 16% at 38% 70%,#3f6a4e,transparent),radial-gradient(ellipse 16% 14% at 30% 22%,#4d6b50,transparent),radial-gradient(ellipse 12% 18% at 44% 48%,#8a7355,transparent),linear-gradient(#233f6d,#1d3a66);animation-duration:150s!important}
+.ec{background-image:radial-gradient(ellipse 14% 5% at 20% 30%,#fff9,transparent),radial-gradient(ellipse 18% 6% at 40% 60%,#fff8,transparent),radial-gradient(ellipse 10% 4% at 32% 78%,#fff7,transparent),radial-gradient(ellipse 12% 5% at 46% 20%,#fff7,transparent);animation-duration:80s!important}
+.earth::after{content:'';position:absolute;inset:0;border-radius:50%;box-shadow:inset -70px -50px 100px #02060ee6,inset 10px 8px 40px #8fb4ff33;pointer-events:none}
+.bub{position:absolute;border-radius:50%;cursor:pointer;z-index:3;transition:scale .3s var(--eo);will-change:translate}.bub:hover,.bub:focus-visible{scale:1.1}
+.core{position:absolute;inset:0;border-radius:50%;border:1px solid #ffffff22;display:grid;place-items:center;animation:fl var(--d,5s) ease-in-out infinite alternate;transition:opacity .3s,box-shadow .4s}
+.core svg{width:38%;height:38%;fill:none;stroke:currentColor;stroke-width:1.5}
+.bub.sel::before{content:'';position:absolute;inset:-8px;border:1px dashed currentColor;border-radius:50%;animation:spin 14s linear infinite}
+.bub.sel .core{box-shadow:0 0 30px -4px currentColor;animation:fl var(--d,5s) ease-in-out infinite alternate,br 3s ease-in-out infinite}
+.rg{position:absolute;inset:0;border:1px solid currentColor;border-radius:50%;opacity:0;pointer-events:none}
+.playing .bub.sel .rg{animation:rip 2.4s ease-out infinite}.playing .bub.sel .r2{animation-delay:1.2s}
+.tag{position:absolute;left:50%;top:100%;translate:-50% 10px;white-space:nowrap;font-size:11px;background:var(--deep);border:1px solid var(--bd);padding:3px 8px;border-radius:5px;opacity:0;transition:opacity .2s;pointer-events:none;color:var(--tx)}.bub:hover .tag,.bub:focus-visible .tag{opacity:1}
+#lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4}#lines path{fill:none;stroke-width:1.2;stroke-dasharray:3 7;opacity:.6;animation:dash 1s linear infinite}
+.panel{position:absolute;right:2.5%;bottom:5%;width:min(33%,420px);min-width:340px;border:1px solid var(--bd);border-radius:26px;background:#111c2de8;backdrop-filter:blur(10px);padding:24px 22px 20px;z-index:6}
+.panel .top{display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;letter-spacing:.08em;color:var(--mut)}
+.cnt{font-size:16px;color:var(--tx2);margin:8px 0 14px;letter-spacing:0;transition:color .3s}.cnt b{font-size:22px;color:var(--tx);font-weight:400}
+.clr{background:none;border:0;border-bottom:1px solid var(--mut);color:var(--tx2);font-size:12px;cursor:pointer;padding:12px 0 2px}
+.items{border-top:1px solid var(--bd);padding-top:14px;min-height:240px}
+.it{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--slate);margin-bottom:10px;transition:border-color .3s,translate .3s}.it:hover{border-color:var(--blue);translate:-4px 0}
+.it i{width:32px;height:32px;border-radius:50%;border:1px solid;display:grid;place-items:center;flex:none}.it i s{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.it div{flex:1}.it b{font-weight:400;font-size:15px;display:block}.it small{font-size:11px;color:var(--mut)}
+.it button{background:none;border:0;color:var(--tx2);font-size:18px;cursor:pointer;width:44px;height:44px;transition:transform .3s var(--eo),color .2s}.it button:hover{transform:rotate(90deg);color:var(--red)}
+.empty{color:var(--mut);font-size:13px;text-align:center;padding:60px 0}
+.bot{border-top:1px solid var(--bd);padding-top:18px;margin-top:6px}.bot .ctl{color:var(--tx2)}.bot b{font-weight:400;color:var(--tx);font-size:15px;display:block}
+.eq{display:flex;gap:3px;align-items:flex-end;height:16px}.eq i{width:3px;height:16px;background:var(--teal);transform-origin:bottom;transform:scaleY(.3)}
+.note{position:absolute;left:5%;bottom:3%;font-size:11px;color:var(--mut);z-index:5}
+#intro{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-content:center;justify-items:center;gap:18px;cursor:pointer}
+#iring{width:min(46vw,300px);aspect-ratio:1;overflow:visible}
+#iring .o{transform-origin:0 0;animation:spin 6s linear infinite}#iring .o2{animation-duration:9s;animation-direction:reverse}
+#itl{font-size:clamp(28px,6vw,64px);font-weight:500;letter-spacing:.08em;display:flex;overflow:hidden;padding:4px}
+#itl span{display:inline-block}#intro p{font-size:12px;color:var(--mut);letter-spacing:.2em}#intro small{position:absolute;bottom:6%;font-size:11px;color:var(--mut)}
+@keyframes spin{to{rotate:360deg}}@keyframes drift{to{transform:translateX(-50%)}}@keyframes fl{to{transform:translateY(-10px)}}
+@keyframes rip{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(1.9)}}@keyframes br{50%{box-shadow:0 0 50px 0 currentColor}}
+@keyframes dash{to{stroke-dashoffset:-20}}@keyframes fl2{to{background-position-x:9px}}@keyframes blink{50%{opacity:.35}}
+@keyframes sweep{to{left:120%}}@keyframes bob{to{transform:rotate(11deg) translateY(10px)}}@keyframes grid{to{background-position:40px 40px}}
+@keyframes fl{to{transform:translateY(-10px)}}
+.playing .flow{animation-name:fl2}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<canvas id="bg" aria-hidden="true"></canvas><div id="glow"></div>
+<div id="app">
+<nav><div class="ind" id="ind"></div><div class="brand" id="brand"><i></i><b></b></div>
+<button data-go="s1" aria-label="Earth Signals" title="Earth Signals (1)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></button>
+<button disabled aria-label="Signal"><svg viewBox="0 0 24 24"><path d="M3 14h4l3-7 4 10 3-3h4"/></svg></button>
+<button data-go="s2" aria-label="Fun Mode" title="Fun Mode (2)"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="4"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(120 12 12)"/></svg></button>
+<button disabled aria-label="Listen"><svg viewBox="0 0 24 24"><path d="M4 16v-4a8 8 0 0116 0v4M4 15h3v5H4zM17 15h3v5h-3z"/></svg></button>
+<div class="sp"></div><div class="vt mono">SYS_ONLINE // V.1.04</div><div class="av"></div></nav>
+
+<section class="screen" id="s1">
+<aside><h1 class="hd" data-f="-40,0">Earth Signals</h1>
+<p data-f="-40,0">Discover patterns in planetary data through sound. Select an observation dataset to begin sonification.</p>
+<div class="search mono" data-f="-40,0">⌕ Search datasets, coords...</div>
+<div class="sec mono" data-f="-40,0">ACTIVE OBSERVATIONS</div><div id="cards"></div></aside>
+<div class="main">
+<div class="view"><div class="chip mono" style="left:32px;z-index:3" id="dsid" data-f="0,-30"></div><div class="chip mono" style="left:200px;border:0;background:none;color:var(--mut);font-size:11px;top:20px;z-index:3" id="coords" data-f="0,-30"></div>
+<button class="chip mono" id="focus" style="right:32px;border-radius:20px;color:var(--tx2);cursor:pointer;z-index:3" data-f="0,-30">⛶ Focus Mode</button>
+<div class="obs" id="obs" data-f="0,60"><div class="cl c1"></div><div class="cl c2"></div><div class="sat"></div>
+<i class="dot" data-x="40" data-y="30" style="left:40%;top:30%"></i><i class="dot" data-x="60" data-y="60" style="left:60%;top:60%;background:var(--blue);box-shadow:0 0 10px var(--blue)"></i><i class="dot" data-x="22" data-y="70" style="left:22%;top:70%"></i>
+<div class="beam" id="beam"></div><div class="xh" id="xh"></div>
+<div class="meta mono">RESOLUTION: 0.25° x 0.25°<br>PROJECTION: EQUIDIRECTANGULAR</div></div></div>
+<div class="low">
+<div data-f="0,50"><div class="lbl mono">EXPLORATION MODE</div>
+<div class="seg" id="seg"><div class="pill2" id="sp"></div><button>Probe</button><button class="on">Scan</button><button>Time</button></div>
+<div style="flex:1"></div><div class="lbl mono" style="margin-bottom:6px">SCAN VELOCITY <span id="vel" style="color:var(--tx)">1.2x</span></div>
+<input type="range" id="velr" aria-label="Scan velocity" min="0.5" max="3" step="0.1" value="1.2"></div>
+<div data-f="0,50"><div class="lbl mono">DATA MAPPING <span>⚙</span></div>
+<div class="row"><i style="background:var(--red)"></i>Temperature<span class="flow"></span><span class="pill mono">Pitch</span></div>
+<div class="row"><i style="background:var(--teal)"></i>Current Velocity<span class="flow"></span><span class="pill mono">Amplitude</span></div>
+<div class="row"><i style="background:var(--blue)"></i>Salinity Depth<span class="flow"></span><span class="pill mono">Timbre / Filter</span></div></div>
+<div data-f="0,50"><div class="wave" id="wave"></div>
+<div class="ctl mono"><span class="t" id="time1">01:24 / 05:00</span>
+<button class="ico" id="rst" aria-label="Restart"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8M4 4v5h5"/></svg></button>
+<button class="play" id="p1" aria-label="Play or pause"></button>
+<span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 010 6"/></svg></span></div></div>
+</div></div></section>
+
+<section class="screen" id="s2">
+<div class="head"><div data-f="-40,0"><span class="badge mono">DISCOVERY MODE</span><span class="mono" style="font-size:11px;color:var(--tx2)">AQUA SATELLITE // MODIS</span></div>
+<h2 class="hd" id="h2">Discover the elements.</h2>
+<p data-f="0,30">Explore individual components of this planetary observation. Select up to 3 elements to map their physical properties into a combined auditory experience.</p></div>
+<div class="live2 mono" data-f="40,0"><i></i>Live Observation Field</div>
+<div class="earth" id="earth" data-f="0,0"><div class="cl tex"></div><div class="cl ec"></div></div>
+<svg id="lines" aria-hidden="true"></svg><div id="bubs"></div>
+<div class="panel" data-f="80,0"><div class="top mono"><div>ACTIVE SYNTHESIS<div class="cnt hd" id="cnt"></div></div><button class="clr mono" id="clr">Clear All</button></div>
+<div class="items" id="items" aria-live="polite"></div>
+<div class="bot"><div class="ctl"><button class="play" id="p2" aria-label="Play or pause combined sonification"></button><div class="t"><b>Combined Sonification</b><span class="mono" id="time2" style="font-size:12px">0:00 / 4:32</span></div>
+<div class="eq" id="eq"><i></i><i></i><i></i><i></i><i></i></div>
+<span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 010 6"/></svg></span><input type="range" id="vol" aria-label="Volume" style="width:90px" value="75"></div></div></div>
+<div class="note mono">Component labels are illustrative placeholders, not processed observation results. Press play for synthesized sound.</div>
+</section></div>
+<canvas id="fx" aria-hidden="true"></canvas><div id="flash"></div>
+<div id="intro"><svg id="iring" viewBox="-110 -110 220 220"><circle r="100" fill="none" stroke="#29394D"/><g class="o"><circle r="84" fill="none" stroke="#729BCB88" stroke-dasharray="3 9"/><circle cx="84" r="5" fill="#78B9BC"/></g><g class="o o2"><circle r="62" fill="none" stroke="#A39BCB66" stroke-dasharray="1 6"/><circle cy="-62" r="4" fill="#A39BCB"/></g><circle r="30" fill="#729BCB" opacity=".9"/><circle r="30" fill="none" stroke="#729BCB" stroke-width="2"><animate attributeName="r" from="30" to="52" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" from=".8" to="0" dur="1.6s" repeatCount="indefinite"/></circle></svg>
+<h1 class="hd" id="itl">EARTH JUKEBOX</h1><p class="mono">OBSERVATORY // SONIFICATION ENGINE</p><small class="mono">click to skip</small></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const M=!matchMedia('(prefers-reduced-motion:reduce)').matches,EO='cubic-bezier(.16,1,.3,1)';
+let mx=0,my=0,sx=0,sy=0,px=innerWidth/2,py=innerHeight/2,sgx=px,sgy=py;
+addEventListener('pointermove',e=>{px=e.clientX;py=e.clientY;mx=px/innerWidth*2-1;my=py/innerHeight*2-1});
+/* ---------- canvases: stars + fx ---------- */
+const bg=$('#bg'),bx=bg.getContext('2d'),fxc=$('#fx'),fx=fxc.getContext('2d');let W,H,stars=[],P=[],R=[],shoot=null;
+function size(){W=bg.width=fxc.width=innerWidth;H=bg.height=fxc.height=innerHeight;stars=Array.from({length:Math.min(240,W*H/5500|0)},()=>({x:Math.random()*W,y:Math.random()*H,z:Math.random()*.9+.1,p:Math.random()*6}))}
+size();addEventListener('resize',size);
+function ring(x,y,c){if(M)R.push({x,y,r:6,l:1,c})}
+function burst(x,y,c,n=20){if(!M)return;for(let i=0;i<n;i++){const a=Math.random()*6.28,s=1+Math.random()*3.5;P.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,c})}ring(x,y,c)}
+addEventListener('pointerdown',e=>ring(e.clientX,e.clientY,'#729BCB'));
+function drawFX(t){bx.clearRect(0,0,W,H);
+for(const s of stars){const a=.35+.45*Math.sin(t/900+s.p);bx.globalAlpha=a*s.z;bx.fillStyle='#cfe0ff';const x=(s.x+sx*s.z*28+W)%W,y=(s.y+sy*s.z*18+H)%H;bx.fillRect(x,y,s.z*1.8,s.z*1.8)}
+if(M&&!shoot&&Math.random()<.003)shoot={x:Math.random()*W,y:Math.random()*H*.4,l:1};
+if(shoot){bx.globalAlpha=shoot.l;bx.strokeStyle='#cfe0ff';bx.beginPath();bx.moveTo(shoot.x,shoot.y);bx.lineTo(shoot.x-70,shoot.y-30);bx.stroke();shoot.x+=14;shoot.y+=6;shoot.l-=.02;if(shoot.l<=0)shoot=null}
+fx.clearRect(0,0,W,H);fx.globalCompositeOperation='lighter';
+P=P.filter(p=>p.l>0);for(const p of P){p.x+=p.vx;p.y+=p.vy;p.vx*=.96;p.vy*=.96;p.l-=.022;fx.globalAlpha=Math.max(p.l,0);fx.fillStyle=p.c;fx.beginPath();fx.arc(p.x,p.y,2,0,6.3);fx.fill()}
+R=R.filter(r=>r.l>0);for(const r of R){r.r+=5*r.l+1;r.l-=.025;fx.globalAlpha=Math.max(r.l,0);fx.strokeStyle=r.c;fx.lineWidth=2*r.l;fx.beginPath();fx.arc(r.x,r.y,r.r,0,6.3);fx.stroke()}
+fx.globalCompositeOperation='source-over'}
+/* ---------- audio ---------- */
+let AC,an,master,nodes=[],fd=new Uint8Array(32),vol=.6,lv=0;
+function aStart(spec){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume();
+if(!an){an=AC.createAnalyser();an.fftSize=64;master=AC.createGain();master.connect(an);an.connect(AC.destination)}
+aStop();master.gain.cancelScheduledValues(0);master.gain.setValueAtTime(0,AC.currentTime);master.gain.linearRampToValueAtTime(vol,AC.currentTime+.7);
+nodes=spec.map(s=>{const o=AC.createOscillator(),g=AC.createGain(),l=AC.createOscillator(),lg=AC.createGain(),am=AC.createOscillator(),ag=AC.createGain();
+o.type=s.t;o.frequency.value=s.f;l.frequency.value=s.l;lg.gain.value=s.d;l.connect(lg);lg.connect(o.frequency);
+g.gain.value=s.g||.14;am.frequency.value=s.l*.6;ag.gain.value=(s.g||.14)*.5;am.connect(ag);ag.connect(g.gain);
+o.connect(g);g.connect(master);[o,l,am].forEach(n=>n.start());return[o,l,am]})}catch(e){}}
+function aStop(){if(!AC||!master)return;try{master.gain.cancelScheduledValues(0);master.gain.setValueAtTime(master.gain.value,AC.currentTime);master.gain.linearRampToValueAtTime(0,AC.currentTime+.35);const old=nodes;nodes=[];setTimeout(()=>old.forEach(a=>a.forEach(n=>{try{n.stop()}catch(e){}})),450)}catch(e){}}
+/* ---------- routing + transitions ---------- */
+let cur=null,pl1=0,pl2=0;
+function enter(el){if(!M)return;$$('#'+el.id+' [data-f]').forEach((n,i)=>{const[dx,dy]=n.dataset.f.split(',');n.animate([{opacity:0,transform:`translate(${dx}px,${dy}px) scale(.95)`},{opacity:1,transform:'none'}],{duration:750,delay:i*55,easing:EO,fill:'backwards'})})}
+const PL='<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>',PA='<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>';
+function sync(){$('#p1').innerHTML=pl1?PA:PL;$('#p2').innerHTML=pl2?PA:PL;$('#s1').classList.toggle('playing',!!pl1);$('#s2').classList.toggle('playing',!!pl2)}
+function go(h){if(h===cur)return;const o=cur&&$('#'+cur);cur=h;pl1=pl2=0;aStop();sync();
+const show=()=>{const n=$('#'+h);n.classList.add('on');enter(n);nav();
+if(M){$('#app').animate([{scale:1.02},{scale:1}],{duration:700,easing:EO});$('#flash').animate([{opacity:.3},{opacity:0}],{duration:520});ring(innerWidth/2,innerHeight/2,'#78B9BC');if(h==='s2')titleIn()}};
+if(o&&M){o.animate([{opacity:1},{opacity:0,transform:'scale(1.05)'}],{duration:180,easing:'ease-in'}).onfinish=()=>{o.classList.remove('on');show()}}else{o&&o.classList.remove('on');show()}}
+function nav(){$$('nav [data-go]').forEach(b=>{const on=b.dataset.go===cur;b.classList.toggle('on',on);b.setAttribute('aria-current',on);if(on)$('#ind').style.translate='0 '+b.offsetTop+'px'})}
+$$('nav [data-go]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.go==='s2'?'fun':'signals'});
+const route=()=>go(location.hash==='#fun'?'s2':'s1');addEventListener('hashchange',route);
+function titleIn(){const h=$('#h2');h.querySelectorAll('.w').forEach((w,i)=>w.animate([{opacity:0,transform:i%2?'translateY(60px)':'translateX(-80px)'},{opacity:1,transform:'none'}],{duration:800,delay:150+i*200,easing:EO,fill:'backwards'}))}
+$('#h2').innerHTML=$('#h2').textContent.split(' ').map(w=>`<span class="w">${w}</span>`).join('');
+/* ---------- screen 1 ---------- */
+const DS=[{n:'Global Ocean Currents',d:'Surface velocity & temperature',id:'DS-OC-2024',c:[40.7,-74],g:'radial-gradient(circle at 50% 110%,#5a7ab0 0,#26406a 28%,#0d1424 52%)',live:1,sp:[{f:130.8,t:'sine',l:.3,d:4},{f:196,t:'triangle',l:.5,d:3},{f:261.6,t:'sine',l:.2,d:6,g:.08}],f:'none'},
+{n:'Atmospheric CO2',d:'Tropospheric dispersion',id:'DS-AT-2024',c:[40.71,-74],g:'linear-gradient(110deg,#888,#3a3a40 60%,#1a1a20)',sp:[{f:110,t:'triangle',l:.8,d:5},{f:164.8,t:'sine',l:.4,d:2},{f:329.6,t:'sine',l:1.1,d:8,g:.06}],f:'grayscale(.7) brightness(.85)'},
+{n:'Seismic Resonance',d:'Tectonic plate stress metrics',id:'DS-SR-2024',c:[35.68,139.69],g:'linear-gradient(160deg,#0a0e16,#2a3140 55%,#0a0e16)',sp:[{f:55,t:'sawtooth',l:.2,d:1.5,g:.06},{f:82.4,t:'sine',l:.7,d:3},{f:123.5,t:'triangle',l:.35,d:2}],f:'hue-rotate(-40deg) brightness(.6)'}];
+let ds=0,mode=1,vel=1.2,t1=84,bpos=30,lastDot=[0,0,0];
+function cards(){$('#cards').innerHTML=DS.map((x,i)=>`<div class="card ${i===ds?'sel':''}" data-i="${i}" tabindex="0" role="button" aria-pressed="${i===ds}"><div class="th" style="background:${x.g}">${x.live?'<span class="live mono">● LIVE FEED</span>':''}</div><b>${x.n}</b><small>${x.d}</small></div>`).join('');
+$$('.card').forEach(c=>{const pick=()=>{ds=+c.dataset.i;cards();$('#dsid').textContent='▤ '+DS[ds].id;$('#obs').style.filter=DS[ds].f;const r=c.getBoundingClientRect();burst(r.left+r.width/2,r.top+40,'#729BCB',14);if(pl1)aStart(DS[ds].sp)};
+c.onclick=pick;c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}};
+c.onpointermove=e=>{const r=c.getBoundingClientRect();c.style.setProperty('--ry',((e.clientX-r.left)/r.width-.5)*10+'deg');c.style.setProperty('--rx',-((e.clientY-r.top)/r.height-.5)*10+'deg')};
+c.onpointerleave=()=>{c.style.setProperty('--rx','0deg');c.style.setProperty('--ry','0deg')}})}
+cards();$('#dsid').textContent='▤ '+DS[0].id;
+const coord=(la,lo)=>`LAT: ${Math.abs(la).toFixed(2)}° ${la<0?'S':'N'}  LNG: ${lo.toFixed(2)}° ${lo<0?'W':'E'}`;$('#coords').textContent='LAT: 14.59° N  LNG: -38.21° W';
+const sb=$$('#seg button');function setMode(i){mode=i;sb.forEach((b,j)=>b.classList.toggle('on',i===j));$('#sp').style.translate=i*100+'% 0';$('#beam').style.display=i===0?'none':'block';$('#xh').style.display='none'}
+sb.forEach((b,i)=>b.onclick=()=>setMode(i));setMode(1);
+$('#velr').oninput=e=>{vel=+e.target.value;$('#vel').textContent=vel.toFixed(1)+'x'};
+const obs=$('#obs');
+obs.onpointermove=e=>{if(mode!==0)return;const r=obs.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height,xh=$('#xh');xh.style.display='block';xh.style.translate=`${x*r.width}px ${y*r.height}px`;$('#coords').textContent=coord(90-y*180,x*360-180)};
+obs.onpointerleave=()=>$('#xh').style.display='none';
+let foc=0;$('#focus').onclick=()=>{foc^=1;const s=obs.style;s.left=s.right=foc?'1.5%':'8%';s.top=foc?'9%':'16%';s.bottom=foc?'3%':'12%'};
+const HB=[10,16,28,12,40,64,26,10,50,22,70,90,98,60,24,36,12,28,16,40,22,12];
+$('#wave').innerHTML=HB.map(()=>'<i></i>').join('');const bars=$$('#wave i');
+const f2=n=>String(Math.floor(n)).padStart(2,'0');
+$('#p1').onclick=()=>{pl1^=1;sync();pl1?aStart(DS[ds].sp):aStop()};
+$('#rst').onclick=()=>{t1=0;bpos=0};
+/* ---------- screen 2 ---------- */
+const IC={drop:'<path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z"/>',therm:'<path d="M10 4a2 2 0 014 0v9a4 4 0 11-4 0z"/>',veg:'<path d="M5 19c0-8 5-13 14-14 0 9-5 14-14 14zM5 19l7-7"/>',dust:'<circle cx="9" cy="10" r="2"/><circle cx="15" cy="13" r="2"/><circle cx="10" cy="16" r="1.5"/>'};
+const EL=[{k:'chl',n:'Oceanic Chlorophyll',m:'Freq Mod // Surface',c:'#78B9BC',bg:'radial-gradient(circle at 35% 30%,#2f6a66,#12302f)',x:28.4,y:35,s:148,i:'drop',sel:1,sp:{f:220,t:'sine',l:.4,d:8}},
+{k:'aer',n:'Atmospheric Aerosols',m:'Amplitude // Cloud',c:'#A39BCB',bg:'radial-gradient(circle at 35% 30%,#3a2c4c,#150f20)',x:66,y:25,s:176,i:'dust',sel:1,sp:{f:329.6,t:'triangle',l:.25,d:3}},
+{k:'sst',n:'Sea Surface Temp',m:'Distortion // Thermal',c:'#729BCB',bg:'radial-gradient(circle at 35% 30%,#1d3050,#0a1224)',x:47.5,y:58,s:124,i:'therm',sel:1,sp:{f:110,t:'sawtooth',l:.9,d:3,g:.06}},
+{k:'o3',n:'Ozone O₃',m:'Pitch // Stratosphere',c:'#b07be0',bg:'radial-gradient(circle at 35% 30%,#2a1240,#12081c)',x:19.5,y:49,s:100,txt:'O₃',sp:{f:165,t:'sine',l:.3,d:2}},
+{k:'veg',n:'Vegetation',m:'Timbre // Land',c:'#e0883e',bg:'radial-gradient(circle at 35% 30%,#6b3d1e,#2a170a)',x:34.4,y:74.5,s:112,i:'veg',sp:{f:261.6,t:'triangle',l:.5,d:4}},
+{k:'dst',n:'Dust Plume',m:'Filter // Desert',c:'#78B9BC',bg:'radial-gradient(circle at 35% 30%,#1f3a50,#0c1826)',x:42.4,y:20,s:96,i:'dust',sp:{f:392,t:'sine',l:.7,d:5}}];
+let t2=0,shown=[];
+$('#bubs').innerHTML=EL.map((e,i)=>`<div class="bub" data-f="0,${40+i*10}" data-i="${i}" tabindex="0" role="button" aria-label="${e.n}" style="left:calc(${e.x}% - ${e.s/2}px);top:calc(${e.y}% - ${e.s/2}px);width:${e.s}px;height:${e.s}px;color:${e.c};--z:${e.s/176}"><div class="core" style="background:${e.bg};--d:${4+i*.7}s">${e.txt?`<b class="mono" style="font-size:13px">${e.txt}</b>`:`<svg viewBox="0 0 24 24">${IC[e.i]}</svg>`}</div><i class="rg"></i><i class="rg r2"></i><span class="tag mono">${e.n}</span></div>`).join('');
+$('#lines').innerHTML=EL.map(e=>`<path stroke="${e.c}"/>`).join('');
+const bubs=$$('.bub'),lp=$$('#lines path');
+function toggle(i){const e=EL[i];if(!e.sel&&EL.filter(x=>x.sel).length>=3){const c=$('#cnt');c.style.color='var(--red)';c.animate([{translate:'0'},{translate:'-6px'},{translate:'6px'},{translate:'0'}],{duration:300});setTimeout(()=>c.style.color='',500);return}
+e.sel=e.sel?0:1;const r=bubs[i].getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,e.c,e.sel?26:10);r2();if(pl2)restartA()}
+bubs.forEach((b,i)=>{b.onclick=()=>toggle(i);b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(i)}}});
+function restartA(){const s=EL.filter(e=>e.sel);s.length?aStart(s.map(e=>e.sp)):(pl2=0,aStop(),sync())}
+function r2(){const sel=EL.filter(e=>e.sel);bubs.forEach((b,i)=>{b.classList.toggle('sel',!!EL[i].sel);b.setAttribute('aria-pressed',!!EL[i].sel);b.firstChild.style.opacity=EL[i].sel?1:.75});
+$('#cnt').innerHTML=`<b>${sel.length} / 3</b> Elements selected`;
+$('#items').innerHTML=sel.length?sel.map(e=>`<div class="it" data-k="${e.k}"><i style="color:${e.c}"><s></s></i><div><b class="hd">${e.n}</b><small class="mono">${e.m}</small></div><button aria-label="Remove ${e.n}">✕</button></div>`).join(''):'<div class="empty">Select up to 3 elements in the field.</div>';
+$$('.it').forEach(n=>{if(M&&!shown.includes(n.dataset.k))n.animate([{opacity:0,transform:'translateX(60px)'},{opacity:1,transform:'none'}],{duration:600,easing:EO});n.querySelector('button').onclick=()=>{toggle(EL.findIndex(e=>e.k===n.dataset.k))}});
+shown=sel.map(e=>e.k)}
+$('#clr').onclick=()=>{EL.forEach(e=>e.sel=0);r2();if(pl2){pl2=0;aStop();sync()}};
+$('#p2').onclick=()=>{if(!EL.some(e=>e.sel))return;pl2^=1;sync();pl2?restartA():aStop()};
+$('#vol').oninput=e=>{vol=e.target.value/100*.8;if(master&&pl2)master.gain.value=vol};
+r2();
+/* ---------- magnetic play buttons ---------- */
+$$('.play').forEach(b=>{b.onpointermove=e=>{if(!M)return;const r=b.getBoundingClientRect();b.style.translate=`${(e.clientX-r.left-r.width/2)*.3}px ${(e.clientY-r.top-r.height/2)*.3}px`};b.onpointerleave=()=>b.style.translate='0 0'});
+addEventListener('keydown',e=>{if(e.target!==document.body)return;if(e.key==='1')location.hash='signals';if(e.key==='2')location.hash='fun';if(e.key===' '){e.preventDefault();(cur==='s1'?$('#p1'):$('#p2')).click()}});
+/* ---------- main loop ---------- */
+let last=0,eqs=$$('#eq i'),brand=$('#brand i'),glow=$('#glow');
+function frame(t){const dt=Math.min((t-last)/1000,.1);last=t;
+sx+=(mx-sx)*.06;sy+=(my-sy)*.06;sgx+=(px-sgx)*.12;sgy+=(py-sgy)*.12;
+if(M)glow.style.transform=`translate(${sgx}px,${sgy}px)`;
+lv=0;if(an&&nodes.length){an.getByteFrequencyData(fd);lv=fd.reduce((a,b)=>a+b,0)/fd.length/255}
+brand.style.scale=1+lv*1.2;
+if(cur==='s1'){
+ if(pl1){t1+=dt*vel;if(t1>300){t1=300;pl1=0;aStop();sync()}}
+ $('#time1').textContent=`${f2(t1/60)}:${f2(t1%60)} / 05:00`;
+ if(mode===1)bpos=(bpos+dt*vel*(pl1?14:6))%100;if(mode===2)bpos=t1/3;
+ const bw=obs.clientWidth;if(mode)$('#beam').style.translate=bpos/100*bw+'px 0';
+ if(M)obs.style.transform=`perspective(1200px) rotateY(${sx*3}deg) rotateX(${-sy*2}deg)`;
+ if(mode&&M)$$('.dot').forEach((d,i)=>{if(Math.abs(bpos-d.dataset.x)<1.3&&t-lastDot[i]>1500){lastDot[i]=t;const r=d.getBoundingClientRect();burst(r.left+4,r.top+4,'#78B9BC',16)}});
+ const hi=Math.min(bars.length-1,Math.floor(t1/300*bars.length));
+ bars.forEach((b,i)=>{const base=HB[i]/100,v=pl1?base*(.45+fd[i%32]/255*1.3):base*(.92+.08*Math.sin(t/500+i));b.style.transform=`scaleY(${Math.min(v,1)})`;b.classList.toggle('hi',i===hi)})}
+if(cur==='s2'){
+ if(pl2){t2+=dt;if(t2>272){t2=0;pl2=0;aStop();sync()}}
+ const m=Math.floor(t2/60);$('#time2').textContent=`${m}:${f2(t2%60)} / 4:32`;
+ eqs.forEach((q,i)=>q.style.transform=`scaleY(${pl2?.2+fd[i*3]/255*1.1:.3})`);
+ if(M)$('#earth').style.scale=1+lv*.03;
+ const s2=$('#s2').getBoundingClientRect();let k=0;
+ bubs.forEach((b,i)=>{if(M)b.style.translate=`${-sx*18*b.style.getPropertyValue('--z')}px ${-sy*12*b.style.getPropertyValue('--z')}px`;
+  const c=b.firstChild;if(pl2&&EL[i].sel&&M)c.style.scale=1+lv*.25;else c.style.scale=1});
+ lp.forEach(p=>p.style.display='none');
+ EL.forEach((e,i)=>{if(!e.sel)return;const row=$$('.it i')[k++];if(!row)return;const a=bubs[i].getBoundingClientRect(),b=row.getBoundingClientRect();
+  const x1=a.left+a.width/2-s2.left,y1=a.top+a.height/2-s2.top,x2=b.left+16-s2.left,y2=b.top+16-s2.top;lp[i].style.display='block';lp[i].setAttribute('d',`M${x1} ${y1}C${x1+120} ${y1},${x2-140} ${y2},${x2} ${y2}`)})}
+drawFX(t);requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+/* ---------- intro: foreground becomes the transition ---------- */
+const itl=$('#itl');itl.innerHTML=[...itl.textContent].map(c=>`<span>${c===' '?'&nbsp;':c}</span>`).join('');
+let started=0;function begin(){if(started)return;started=1;route();const i=$('#intro');
+if(!M){i.remove();return}
+$('#iring').animate([{transform:'scale(1)',opacity:1},{transform:'scale(40)',opacity:0}],{duration:900,easing:'cubic-bezier(.7,0,.9,.4)',fill:'forwards'});
+i.animate([{opacity:1},{opacity:0}],{duration:500,delay:450,fill:'forwards'}).onfinish=()=>i.remove()}
+if(M){itl.querySelectorAll('span').forEach((s,j)=>s.animate([{transform:j%2?'translateY(70px)':'translateY(-70px)',opacity:0},{transform:'none',opacity:1}],{duration:800,delay:j*45,easing:EO,fill:'backwards'}));setTimeout(begin,2400)}else begin();
+$('#intro').onclick=begin;
+</script></body></html>

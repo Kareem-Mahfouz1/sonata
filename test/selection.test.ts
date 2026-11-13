@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { MAX_ELEMENTS, formatTime, ratio, toggleSelection } from '../src/lib/selection.ts'
+import { MAX_ELEMENTS, formatShort, formatTime, ratio, toggleSelection } from '../src/lib/selection.ts'
 
 test('toggleSelection adds, removes and caps at the maximum', () => {
   assert.deepEqual(toggleSelection([], 'a').selected, ['a'])
@@ -19,6 +19,13 @@ test('formatTime is mm:ss and never negative', () => {
   assert.equal(formatTime(-4), '00:00')
   assert.equal(formatTime(300), '05:00')
   assert.equal(formatTime(9.9), '00:09')
+})
+
+test('formatShort drops the leading zero on minutes', () => {
+  assert.equal(formatShort(0), '0:00')
+  assert.equal(formatShort(84), '1:24')
+  assert.equal(formatShort(272), '4:32')
+  assert.equal(formatShort(-4), '0:00')
 })
 
 test('ratio clamps to the 0..1 range', () => {

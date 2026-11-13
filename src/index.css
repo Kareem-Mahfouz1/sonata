@@ -1,8 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Space+Grotesk:wght@400;500&display=swap');
 @import './styles/tokens.css';
 
 * {
   box-sizing: border-box;
+  margin: 0;
 }
 
 html,
@@ -12,10 +13,9 @@ body,
 }
 
 body {
-  margin: 0;
-  background: var(--midnight-navy);
-  color: var(--text-primary);
-  font: 400 13px/1.5 var(--font-ui);
+  background: var(--bg);
+  color: var(--tx);
+  font: 14px/1.5 var(--font-ui);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -45,13 +45,17 @@ img {
 }
 
 :focus-visible {
-  outline: 2px solid var(--dusty-blue);
+  outline: 2px solid var(--blue);
   outline-offset: 3px;
   border-radius: 4px;
 }
 
 .mono {
   font-family: var(--font-mono);
+}
+
+.hd {
+  font-family: var(--font-display);
 }
 
 .sr-only,
@@ -71,9 +75,7 @@ img {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
   }
 }
