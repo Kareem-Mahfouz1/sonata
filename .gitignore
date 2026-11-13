@@ -27,6 +27,6 @@ dist-ssr
 /data/raw/
 /data/preview/
 /data/processed/
-/public/data/layers/
+/public/data/layers/co/
 __pycache__/
 *.pyc
