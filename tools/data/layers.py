@@ -55,6 +55,7 @@ LAYERS = {
     "pm25": {
         "name": "Particulate Matter (PM2.5)",
         "units": "ug/m3",
+        "units_as_read": "micrograms per cubic meter (μg/m³)",
         "folder": "PM2.5_Layer",
         "template": "AirQuality_PM2.5_Layer_2048x1024_{index:04d}.png",
         "colorbar": "PM2.5_colorbar.png",

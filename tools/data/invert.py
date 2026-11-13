@@ -98,36 +98,22 @@ def invert_frame(inv: Inverter, block: np.ndarray, cov: np.ndarray, cfg: dict,
 
 
 def invert_point(inv: Inverter, color: np.ndarray, base: float | None, cfg: dict) -> tuple:
-    """Invert a single colour (a full-resolution preset patch median)."""
-    p = np.asarray(color, dtype=np.float32).reshape(1, 3)
-    work = p if base is None else np.clip(p / max(base, 1e-3), 0, 255)
-    idx, chroma_dist = inv.match_chroma(work)
-    if base is not None:
-        total = np.maximum(work.sum(axis=1, keepdims=True), 1e-6)
-        chroma_all = np.sqrt(((work / total)[:, None, :] - inv.chroma[None, :, :]) ** 2).sum(axis=2)
-        lum_dist = np.abs(luminance(work)[:, None] / 255.0 - inv.lum[None, :])
-        idx = (chroma_all + 0.35 * lum_dist).argmin(axis=1)
-        chroma_dist = chroma_all[np.arange(1), idx]
-    b, spread = inv.implied_base(p, idx)
-    flag = OK
-    if p.max() < cfg["brightness_min"]:
-        flag = DARK
-    elif chroma_dist[0] > cfg["chroma_tol"]:
-        flag = NO_MATCH
-    elif spread[0] > cfg["base_spread_max"]:
-        flag = BASE_INCONSISTENT
-    elif saturation(work)[0] < cfg["sat_min"]:
-        flag = LOW_SAT
-    return float(inv.values[idx[0]]), int(flag), float(chroma_dist[0])
+    """Invert a patch median using the identical grid matcher and thresholds."""
+    block = np.asarray(color, dtype=np.float32).reshape(1, 1, 3)
+    coverage = np.array([[float(block.max() >= cfg["brightness_min"])]])
+    base_map = None if base is None else np.array([[base]], dtype=np.float32)
+    result = invert_frame(inv, block, coverage, cfg, base=base_map)
+    return (float(result["value"][0, 0]), int(result["flags"][0, 0]),
+            float(result["chroma_dist"][0, 0]))
 
 
 def estimate_base(frames: list[dict], blocks: list[np.ndarray], cfg: dict) -> dict:
     """Estimate the static greyscale shading and test whether it is static.
 
-    The estimator takes a high percentile of the per-frame implied base
-    (p90, i.e. the maximum with two frames): a wrong colour match can only
-    make the implied base too low, never too high, so the upper envelope is
-    the robust estimate.
+    The estimator takes p90 of the per-frame implied base as an empirical
+    upper-envelope heuristic. It is not a calibrated base estimate: wrong
+    colour matches can bias it in either direction, and flagged input cells
+    currently contribute. Those limitations must remain disclosed.
 
     The staticness test follows the brief: look only at cells whose value is
     low/absent in both frames (near-white, saturation < 0.06).  There the

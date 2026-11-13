@@ -35,6 +35,7 @@ from invert import (FLAG_LEGEND, OK, block_median, dequantise, estimate_base,  #
                     invert_frame, invert_point, quantise)
 from layers import (DEFAULTS, FRAME_COUNT, FRAMES_URL, LAYERS, PRESETS,  # noqa: E402
                     START_DATE, TIME_STEP_HOURS, TIME_STEP_VERIFIED)
+from series import build_series  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw"
@@ -113,6 +114,8 @@ def main() -> None:
     ap.add_argument("--fresh", action="store_true", help="ignore the result cache")
     args = ap.parse_args()
 
+    if not 1 <= args.workers <= MAX_WORKERS:
+        ap.error("--workers must be between 1 and 4")
     nx, ny = (int(v) for v in args.grid.lower().split("x"))
     if args.frames:
         indices = sorted(int(v) for v in args.frames.split(","))
@@ -199,18 +202,24 @@ def main() -> None:
             "units_status": "colourbar label, not independently calibrated",
             "colorbar": {
                 "min": lo, "max": hi, "units": layer["units"],
+                "units_as_read": layer.get("units_as_read", layer["units"]),
                 "interp": layer["interp"],
                 "anchors": layer["anchors"], "anchors_source": layer["anchors_source"],
                 "axis_verified": layer["axis_verified"],
                 "axis_note": layer["axis_note"],
                 "luminance": prof,
             },
-            "grid": {"width": nx, "height": ny, "bbox": [-180, -90, 180, 90]},
+            "grid": {"width": nx, "height": ny, "bbox": [-180, -90, 180, 90],
+                     "projection": "equirectangular", "row_order": "north to south",
+                     "column_order": "west to east", "cell_degrees": [360 / nx, 180 / ny]},
             "frames": {
                 "count": len(indices), "indices": indices,
                 "time": "hour index since 2024-07-01 00:00, assumed hourly, unverified",
                 "time_step_hours": TIME_STEP_HOURS,
                 "time_step_verified": TIME_STEP_VERIFIED,
+                "sample_step_hours": args.every,
+                "epoch_assumed": "2024-07-01 00:00",
+                "clock_reference": "unverified; no verified timezone assigned",
                 "start": START_DATE,
             },
             "quantization": {
@@ -230,45 +239,9 @@ def main() -> None:
         (layer_dir / "layer.json").write_text(json.dumps(sidecar, indent=2))
 
         # --- stage 5: preset time series ------------------------------------
-        series = []
-        for preset in PRESETS:
-            col = int(np.floor((preset["lon"] + 180) / 360 * nx))
-            row = int(np.floor((90 - preset["lat"]) / 180 * ny))
-            points = []
-            for i, res in zip(indices, results):
-                # grid method: 3x3 cells around the point (~2 deg)
-                window = np.s_[max(0, row - 1):row + 2, max(0, col - 1):col + 2]
-                vals = res["value"][window]
-                fl = res["flags"][window]
-                ok = fl == OK
-                grid_value = float(vals[ok].mean()) if ok.any() else None
-                grid_flag = int(np.bincount(fl.ravel()).argmax())
-                # fine method: median of the full-resolution patch at the point
-                base_point = base[row, col] if base is not None else None
-                fine_value, fine_flag, fine_chroma = invert_point(
-                    inv, patches[i][preset["id"]], base_point, cfg)
-                if fine_flag != OK:
-                    fine_value = None
-                diff = (None if (fine_value is None or grid_value in (None, 0))
-                        else (fine_value - grid_value) / grid_value * 100.0)
-                points.append({
-                    "frame": i,
-                    "hour_index": i,
-                    "hour_of_day": (i * TIME_STEP_HOURS) % 24,
-                    "value": fine_value,
-                    "flag": fine_flag,
-                    "chroma_dist": fine_chroma,
-                    "grid_value": grid_value,
-                    "grid_flag": grid_flag,
-                    "cells_ok": int(ok.sum()),
-                    "fine_minus_grid_pct": diff,
-                })
-            series.append({"preset": preset["id"], "name": preset["name"],
-                           "lat": preset["lat"], "lon": preset["lon"],
-                           "extraction": "value/flag = median of 5x5 full-res pixels (0.88 deg); "
-                                         "grid_value/grid_flag = 3x3 cells of the 180x90 grid",
-                           "units": layer["units"], "points": points})
-        (layer_dir / "series.json").write_text(json.dumps(series, indent=2))
+        series = build_series(inv, layer, indices, patches, dequantise(values, layer),
+                              flags, base=base, cfg=cfg)
+        (layer_dir / "series.json").write_text(json.dumps(series, indent=2, allow_nan=False) + "\n")
 
         size = sum(p.stat().st_size for p in layer_dir.iterdir() if p.is_file())
         summary[key] = {"frames": len(indices), "bytes": size, "luminance": prof,
